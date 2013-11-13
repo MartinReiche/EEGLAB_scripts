@@ -1,0 +1,236 @@
+This is a collection of scripts to perform essential preprocessing steps,
+averaging and plotting of EEG (ERP) data using MATLAB and the EEGLAB toolbox.
+The scripts are under current development with no guarantee of proper
+functioning. The scripts are published in the hopes of helping people getting
+started using EEGLAB and MATLAB to process EEG data (and for the sake of free
+code). Currently works for BioSemi and Brainvision Recorder raw Data. 
+
+EEG data is processed per subject. Data of several subjects can be processed
+in parallel using the parallel computing toolbox of MATLAB depending on your
+resources. You will have to configure your parallel computing profiles (see:
+http://www.mathworks.de/de/help/distcomp/clusters-and-cluster-profiles.html)
+and include the profile name in the config.m file.
+
+I would like to thank my supervisor Prof. Dr. Alexandra Bendixen for providing
+permission to publish the scripts. Many of the routines are based on her
+ideas.
+
+Copyright (c) 2013 Martin Reiche, Carl-von-Ossietzky-University Oldenburg
+Author: Martin Reiche, martin.reiche@uni-oldnburg.de
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+USAGE:
+eeg_analyze(task_type,[subject_numbers])
+- task_type: 1 - simply passive EEG paradigm: no subject responses triggers 
+                 included
+             2 - active task: including response triggers and evaluating hit
+	     vs. miss events
+- subject_numbers: vector of subject numbers to include in the analysis
+
+DEPENDENCIES: The following scripts and programs are needed for proper running
+              of the scripts
+
+- Matlab
+- EEGLAB (http://sccn.ucsd.edu/eeglab/)
+- eeg_emcp - Andreas Widmann (http://github.com/widmann)
+- firfilt 1.5 - Andreas Widmann (http://github.com/widmann)
+- eeg_rejdelta - Andreas Widmann (http://github.com/widmann)
+- RMAOV1 - Trujillo-Ortiz, A., R. Hernandez-Walls and
+      R.A. Trujillo-Perez. (2004). RMAOV1:One-way repeated measures ANOVA. A
+      MATLAB file. [WWW document]. URL
+      http://www.mathworks.com/matlabcentral/
+      fileexchange/loadFile.do?objectId=5576
+
+CONFIGURATION:
+- config (central configuration file)
+- triggerlabels.m (configuratiuon of trigger labels)
+- func/retrigConf.m (configuration for re-triggering)
+- func/changeTrig.m (define trigger range for omissions/deviants 
+  [for exclusions of events before and after the specified triggers])
+
+#############################################################################
+SHORT DESCRIPTION OF THE SCRIPTS:
+#############################################################################
+The analysis sequence is carried out roughly in the same order:
+
+eeg_analysis.m:
+
+Meta script which controls the whole analysis process. 
+-----------------------------------------------------------------------------
+config.m
+
+Main configuration file. Nearly all analysis parameters, filter settings, path
+configurations, plotting options and trigger configurations are adjusted here.
+-----------------------------------------------------------------------------
+triggerlabels.m
+
+Configuration file for the trigger settings. Here the triggers are
+co-registered with the condition labels. Several other options are available
+like color indices for plotting per trigger or line style options. The
+triggers are also assigned to pools determining which triggers the number of
+epochs for averaging if analysis.equalErp=1. The trigger with the least
+available epochs per subject determines the number of epochs which get
+averaged for the other triggers in the same pool. 
+-----------------------------------------------------------------------------
+func/prepSubDir.m
+
+Prepares result folder for subject and returns its path.
+-----------------------------------------------------------------------------
+func/checkRawData.m
+
+Check if all requested raw Data is available and prepare path
+specification for the current subject
+-----------------------------------------------------------------------------
+func/loadRawData.m
+
+Load raw EEG data file using EEGLAB. Currently loads BIOSIG and Brainvision
+Recorder raw files. Needs to be adjusted for other raw data types.
+-----------------------------------------------------------------------------
+func/part_file.m
+
+Part a given EEG structure for files specified in paths.partFile at sampling
+point specified in paths.partFile. Example: this routine can be used if two
+blocks of the experiment are accidentally saved in the same file. In this case
+the raw file gets loaded as many times as blocks are contained within it which
+then get split at the given sampling points in paths.partFile.
+-----------------------------------------------------------------------------
+func/checkFileBiosig.m & func/checkFileBv.m
+
+Check the currently loaded raw data file for sampling rate, triggercodes
+and trigger latencies. The Biosig version treats the triggers as numerical and
+the brainvision version treats the triggers as strings.
+-----------------------------------------------------------------------------
+func/change_trig.m
+
+Changes triggers at start of block to exclude them from the analysis,
+change omission triggers to hit vs. miss omissions and exclude events in
+predefined ranges around triggers and response trials. Keep care when
+specifying trigger types in config.m (use the appropriate format depending on
+how the triggers are saved in the raw data [biosig: numerical; brainvision:
+strings]) 
+-----------------------------------------------------------------------------
+func/retrigConf.m
+
+Takes current file and condition order and returns the retrigger Cell
+depending on the condition of the current file. Each trigger specified in
+the left column of the cell will be replaced with the trigger in the
+right column of the corresponding line of the retrigger cell.
+-----------------------------------------------------------------------------
+func/bipolarize.m
+
+Bipolarize upper and lower eye channel to vertical EOG and lateral eye
+channels to vertical EOG. Specify eye channels in config.m in the following
+order {'LO1', 'LO2', 'SO1', 'IO1'}
+-----------------------------------------------------------------------------
+func/chanLoc.m
+
+Set cannel locations to desired coordinates. Specify the coordinate file
+in config.m under paths.elecSetup
+-----------------------------------------------------------------------------
+func/interpChan.m
+
+Interpolate channels specified in config.m as follows: the 1st column
+indicates the subject number. The second column indicates the electrode which
+is to be interpolated. If the electrode is given as a string the interpolation
+will be carried out before epoching over the whole block file [specified in
+the 3rd column] (for example if you want to interpolate a channel because it
+was broken and you already noticed while recording). If the channel is given
+as numerical number, the interpolation is carried out after epoching on the
+files which hold the same trigger [specified in the 3rd column] (for example
+if you see that lots of epoches were rejected because of bad data on the given
+channel) 
+
+EXAMPLE:
+
+3,   62, [501 503]; subject 3, channel number 62 on trigger types: 501 & 503
+6, 'P4',        16; subject 6, channel P4 in block file number 16
+-----------------------------------------------------------------------------
+func/fir_filter.m
+
+Perform filtering as specified in config.m. Depending on the rejection method
+there are several different filtering routines: if eye correction is enabled,
+the data gets filtered twice. The first time the block file gets filtered with
+a bandpass (usually 0.1 - 100 Hz [crucial part is the 0.1 high-pass]) and a
+second filter is applied after all data (per subject) was merged into one
+file and the eye correction was performed. The filter application should lead
+to the final desired filter band (eg. if the desired filter band is 0.1 - 30
+Hz the first filter would be a 0.1 - 100 Hz band pass filter and the second
+filter would be a 30 Hz low pass filter)
+-----------------------------------------------------------------------------
+func/segmentation.m
+
+Segmenting the epochs as specified by the triggers in triggerlabels.m. If
+eye-correction is enabled the segmentation is applied on the whole
+concatenated data of the current subject. For all other rejection methods they
+segmentation is applied on the block files separately.
+-----------------------------------------------------------------------------
+func/merge_data.m
+
+For all rejection methods except eye-correction: merge all saved eeg files
+containing data of the same trigger type.
+-----------------------------------------------------------------------------
+func/merge_all.m
+
+If eye-correction is enabled: concatenate all block files (regardless of
+trigger types); run eye correction and apply second filter on the whole data.
+[segmentation is in this case carried out afterwards in the scope of
+eeg_analysis.m] 
+-----------------------------------------------------------------------------
+func/eeg_rejection
+
+Performs artifact rejection, form average and return ERPs for given subject.
+The script returns the end product of the preprocessing step for each
+subject. This contains the ERP structure, the ERP structure with averages
+formed by an equal amount epochs per pool as indicated in triggerlabels.m
+number of corrected and rejected trials etc.
+-----------------------------------------------------------------------------
+func/save_erp.m
+
+Combines all the subject related data from the preprocessing (which gets stored
+in sliced variable because of the parallel preprocessing per subject) in one
+big ERP structure and calculate usable data. 
+
+If the current ERP file already exists, the user will be asked whether to use
+the existing result file or to create a new one. If the existing result file
+is used, the ERP data of the existing subjects will be replaced by the newly
+processed data and the meta data of the current analysis will be saved
+additionally resulting in a structure array were each structure of the array
+represents the meta data of the separate analyses. This only works if the
+batch mode is disabled. With batch mode enabled a new ERP output file is
+written by default indicated with an extra marker of the current batch.
+
+the output ERP structure contains:
+
+- subTrialInd: trial indices for equal amount of trials per trigger group (for
+     each subject and each trigger) 
+- corrTrials: number of correct trials per subject and trigger
+- eventCount: number of overall trials per subject and trigger
+- trialNum: number of trials per trigger group for each subject
+- meta: meta data for each analysis, containing
+  - number of subjects
+  - analysis duration
+  - date of analysis
+  - EEGLAB version
+  - and machine on which on which analysis was run
+- analysis: analysis parameters of each analysis 
+- paths: paths configuration of each analysis
+- trig: trigger setup of each analysis
+- filtPar: filter parameters of each analysis
+- erpAll: ERP Data of all the subjects (combined from several analysis)
+- erpAllEqual: ERP Data of all the subjects (combined from several analysis)
+     with equal amount of epochs per subject and per trigger pool as indicated
+     in triggerlabels.m
+- rejEpochs: cell array for indices of rejected epochs 
+- chanlocs: channel locations (taken from EEG structure of last analysis)
+-----------------------------------------------------------------------------
+
