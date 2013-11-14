@@ -1,0 +1,11 @@
+2013-11-14  Martin Reiche  <reiche.stud@googlemail.com>
+
+	* triggerlabels.m: minor configuration changes
+
+	* config.m: minor configuration changes
+
+	* README: Added description of newly implemented scripts
+
+	* eeg_analysis.m: minor changes and inclusions to implement batch
+	mode and basic plotting routines.
+

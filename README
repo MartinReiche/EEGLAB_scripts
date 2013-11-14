@@ -30,7 +30,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 USAGE:
-eeg_analyze(task_type,[subject_numbers])
+eeg_analysis(task_type,[subject_numbers])
 - task_type: 1 - simply passive EEG paradigm: no subject responses triggers 
                  included
              2 - active task: including response triggers and evaluating hit
@@ -46,10 +46,8 @@ DEPENDENCIES: The following scripts and programs are needed for proper running
 - firfilt 1.5 - Andreas Widmann (http://github.com/widmann)
 - eeg_rejdelta - Andreas Widmann (http://github.com/widmann)
 - RMAOV1 - Trujillo-Ortiz, A., R. Hernandez-Walls and
-      R.A. Trujillo-Perez. (2004). RMAOV1:One-way repeated measures ANOVA. A
-      MATLAB file. [WWW document]. URL
-      http://www.mathworks.com/matlabcentral/
-      fileexchange/loadFile.do?objectId=5576
+  R.A. Trujillo-Perez. (2004). RMAOV1:One-way repeated measures ANOVA. A
+  MATLAB file. (http://www.mathworks.com/matlabcentral/fileexchange)
 
 CONFIGURATION:
 - config (central configuration file)
@@ -57,6 +55,24 @@ CONFIGURATION:
 - func/retrigConf.m (configuration for re-triggering)
 - func/changeTrig.m (define trigger range for omissions/deviants 
   [for exclusions of events before and after the specified triggers])
+
+The analyses can be run in single (normal) or in batch mode. To run several
+analysis subsequently define the parameters for each analysis in
+batch_analysis.m and start the analysis using batch_analysis([job_numbers])
+instead of using eeg_analysis.
+
+ALREADY IMPLEMENTED:
+- the whole preprocessing procedure for brainvision recorder data
+- plotting of ERP data in 'electrode array' and 'statistics' mode
+
+NOT YET IMPLEMENTED:
+- plotting of voltage maps and SCD maps
+- statistical testing
+  - RMANOVA for predefined statistical factors
+  - running t-test or running one-way RMANOVA with FDR correction over given 
+  range of data-points
+- several plot callback functions
+- Cluster mode (run analysis on a remote HPC cluster)
 
 #############################################################################
 SHORT DESCRIPTION OF THE SCRIPTS:
@@ -81,6 +97,13 @@ triggers are also assigned to pools determining which triggers the number of
 epochs for averaging if analysis.equalErp=1. The trigger with the least
 available epochs per subject determines the number of epochs which get
 averaged for the other triggers in the same pool. 
+-----------------------------------------------------------------------------
+batch_analysis.m
+
+Define several analyses with different analysis parameters subsequently
+without getting prompted for input. ERP result files are saved with the index
+of the current job. All customizable parameters for each analysis are
+configured in this script.
 -----------------------------------------------------------------------------
 func/prepSubDir.m
 
@@ -188,11 +211,16 @@ eeg_analysis.m]
 -----------------------------------------------------------------------------
 func/eeg_rejection
 
-Performs artifact rejection, form average and return ERPs for given subject.
+Performs artifact rejection, forms average and returns ERPs for given subject.
 The script returns the end product of the preprocessing step for each
 subject. This contains the ERP structure, the ERP structure with averages
 formed by an equal amount epochs per pool as indicated in triggerlabels.m
 number of corrected and rejected trials etc.
+-----------------------------------------------------------------------------
+func/rejIndex.m
+
+Get indices for rejected trials per subject and trigger from former
+rejection procedure.
 -----------------------------------------------------------------------------
 func/save_erp.m
 
@@ -216,7 +244,7 @@ the output ERP structure contains:
 - corrTrials: number of correct trials per subject and trigger
 - eventCount: number of overall trials per subject and trigger
 - trialNum: number of trials per trigger group for each subject
-- meta: meta data for each analysis, containing
+- meta: meta data for each analysis, containing:
   - number of subjects
   - analysis duration
   - date of analysis
@@ -233,4 +261,82 @@ the output ERP structure contains:
 - rejEpochs: cell array for indices of rejected epochs 
 - chanlocs: channel locations (taken from EEG structure of last analysis)
 -----------------------------------------------------------------------------
+func/calc_diff.m
+
+Asks the user wich of the processed files to read. Reads in the Data and
+calculates the difference waves as specified in triggerlabels.m and performs
+the baseline correction if enabled.
+-----------------------------------------------------------------------------
+func/baseline_corr.m
+
+Takes erpAll data and performs baseline correction if analysis.rmBase is
+enabled in config.m
+-----------------------------------------------------------------------------
+func/plot_erp.m
+
+Handles all plotting routines. There are two different plotting modes:
+'electrode array' and 'statistics'. In 'electrode array' several channels are
+plotted in an array (dimensions determined by lib/getDisp.m according to
+number of channels to plot). In 'statistics' mode curves on one given channel
+are plotted together with an amplitude bar plot for each figure which shows
+the average amplitude within the specified component windows. 
+
+Figures can be configured either in config.m in the cell arrays
+plotPar.plotConds and plotPar.plotCondsStat for 'electrode array' and
+'statistics' mode respectively or interactively using the GUI plotting
+functions embedded in already processed figures. 
+
+Example: Plotting two plots in one figure next to each other and another
+figure with only one plot with several different curves per plot in
+'statistics' mode. The curve names are equivalent to the trigger labels as
+specified in triggerlabels.m
+
+plotCondsStat{plotNumber,figureNumber} = {'Curve-1','Curve-2','Curve-3',[task
+type]};
+
+plotPar.plotCondsStat{1,1} = {'standard-1','standard-2','standard-3',[1 2]};
+plotPar.plotCondsStat{2,1} = {'deviant-1','standard-2',[1 2]};
+plotPar.plotCondsStat{1,2} = {'difference-1','difference-2',[1 2]};
+
+plotPar.plotCondsStatCol = [2 2];			       
+
+plotPar.plotCondsStatCol determines which color indices to use for plotting as
+indicated in the 4th and 5th column of the trigger matrix in triggerlabels.m
+1 = same color per type [within condition comparison]
+2 = same color per condition [across condition comparison]
+
+In the 'statistics' mode the averaged data of each component window in each
+plot can be saved using the 'save data' button.
+-----------------------------------------------------------------------------
+lib/getDisp.m
+
+Calculate plotting parameters (numbers of columns or rows depending on
+different input parameters) for example number of subjects or number of
+conditions.
+-----------------------------------------------------------------------------
+func/getMax.m
+
+Get the maximal y Scale values for one figure
+-----------------------------------------------------------------------------
+lib/distinct_color.m
+
+Returns given number of distinguishable colors by variing the "Hue" value
+in the HSV color space and keeping constant the "Stauration" and "Value"
+parameters. HSV values are then converted to RGB space and returned.
+-----------------------------------------------------------------------------
+lib/subplotERP.m
+
+Takes a Matrix of ERP Data (line represent sampling points, columns
+represent curves). Depending on the columns, plots the curves in one plot
+with predefined colours, adds labels and adjusts the graphics.
+-----------------------------------------------------------------------------
+func/singleERP.m
+
+Function called by SubplotCallback. Plots single channel ERP with
+statistics when clicked on a subplot.
+-----------------------------------------------------------------------------
+
+
+
+
 

@@ -32,12 +32,12 @@ function varargout = config(Method,varargin)
 % run preprocessing
     analysis.preprocess = 1;
     % perform parallel preprocessing 
-    analysis.parallel = 0;
+    analysis.parallel = 1;
     % Cluster configuration 'local...' ('.singleCore' '.dualCore' ...)
     % ex 'local.tripleCore'
-    analysis.core = 'local.quadCore';
+    analysis.core = 'local.dualCore';
     % filter the data
-    analysis.filterFlag = 0;
+    analysis.filterFlag = 1;
     % raw data format (options: 'biosemi', 'brainvision')
     analysis.rawFormat = 'brainvision';
     % change triggers according to func/retrigConf.m
@@ -48,7 +48,7 @@ function varargout = config(Method,varargin)
     % Rejection mode (0: no rejection, 1 delta rejection, 2 delta + eye
     % correction, 3 reject events specified in file, 4 sorted averaging
     % [not yet implemented])
-    analysis.rejmode = 1;
+    analysis.rejmode = 2;
     % perform baseline correction (this option is only available for
     % rejection modes other than sorted averaging, with sorted averaging
     % baseline correction will always be performed
@@ -354,21 +354,21 @@ function varargout = config(Method,varargin)
     % Overhead of voltage scaling (gets added to max values per figure)
     plotPar.yOverhead = 0.5;
     % Channels to plot with stats (per line)
-    plotPar.plotChannelsStat = {'FCz'};
+    plotPar.plotChannelsStat = {'E01'};
     % plot topographies in color or grayscale
     plotPar.colorFlag = 1;
     % Figures to plot. Labels of curves within one Cell go in one
     % plot. Lines of the cell array represent separate plots in one figure
     % and columns represesent separate figures
     
-    plotPar.plotCondsStat{1,1} = {'RepEx_P+_2','RepEx_P+_3','RepEx_P+_4','RepEx_P+D+_5',[1 2]};
-    plotPar.plotCondsStat{2,1} = {'RepEx_P-D-_1','ChangeEx_P+_2','ChangeEx_P+_3','ChangeEx_P+_4','ChangeEx_P+D+_5',[1 2]};
-    plotPar.plotCondsStat{1,2} = {'Diff-2','Diff-3','Diff-4','Diff-5', [1 2]};
+    plotPar.plotCondsStat{1,1} = {'first-tone-1','first-tone-2','first-tone-3','first-tone-4','first-tone-5',[1 2]};
+    plotPar.plotCondsStat{2,1} = {'second-tone-1','second-tone-2','second-tone-3','second-tone-4','second-tone-5',[1 2]};
+    plotPar.plotCondsStat{3,1} = {'tone-diff-1','tone-diff-2','tone-diff-3','tone-diff-4','tone-diff-5',[1 2]};
     
     % Color Setting
-    % 1 = same color per condition [across condition comparison]
-    % 2 = same color per type [within condition comparison]
-    plotPar.plotCondsStatCol = [1 1];
+    % 1 = same color per type [within condition comparison]
+    % 2 = same color per condition [across condition comparison]
+    plotPar.plotCondsStatCol = [2];
     
     % End OF PARAMETER ADJUSTMENT %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     

@@ -250,12 +250,13 @@ function eeg_analysis(taskType,subjects,analysisIn,filtParIn,trigIn,batchMode)
     end % preprocess
 
     if ~batchMode
-        % % calculate difference waves
-        % [erpAll, restoredConf, chanlocs, trig] = calc_diff(subjects,paths,analysis,taskType);
-        % % Get Plot Parameters
-        % [plotPar] = config('Plot','task',taskType);
-        % % Select Channels to plot
-        % plot_erp(erpAll,chanlocs,plotPar,trig,analysis,paths,taskType,restoredConf);
+        %% Calculation of difference
+        % calculate difference waves
+        [erpAll, restoredConf, chanlocs, trig] = calc_diff(subjects,paths,analysis,taskType);
+        % Get Plot Parameters
+        [plotPar] = config('Plot','task',taskType);
+        % Select Channels to plot
+        plot_erp(erpAll,chanlocs,plotPar,trig,analysis,paths,taskType,restoredConf);
     end
 
     

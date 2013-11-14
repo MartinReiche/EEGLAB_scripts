@@ -1,4 +1,4 @@
-% Names of triggers
+% Names of triggers and trigger configurations
 function trig = triggerlabels(trig,taskType)
 %% TRIGGER CONFIGURATIONS %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Original Triggers
@@ -51,6 +51,7 @@ trig.exclBefore = [ ];
 % 5th Column: Color index (same color per type [within condition comparison])
 % 6th Column: Index types belonging together (for choice of same numbers of trials)
 % 7th Column: Linestyle ({} = default = '-')
+
 switch taskType
   case 1
     % PASSIVE TASK (1)
@@ -101,10 +102,10 @@ switch taskType
 % 6th Column is line style (default '-')
 
 trig.diffWaves = {
-    'RepEx_P+_2', 'ChangeEx_P+_2', 'Diff-2', [2], [9], {};
-    'RepEx_P+_3', 'ChangeEx_P+_3', 'Diff-3', [3], [9], {};
-    'RepEx_P+_4', 'ChangeEx_P+_4', 'Diff-4', [4], [9], {};
-    'RepEx_P+D+_5','ChangeEx_P+D+_5', 'Diff-5', [5], [9], {};
-    
+    'first-tone-1', 'second-tone-1', 'tone-diff-1', [5], [1], {};
+    'first-tone-2', 'second-tone-2', 'tone-diff-2', [5], [2], {};
+    'first-tone-3', 'second-tone-3', 'tone-diff-3', [5], [3], {};
+    'first-tone-4', 'second-tone-4', 'tone-diff-4', [5], [4], {};
+    'first-tone-5', 'second-tone-5', 'tone-diff-5', [5], [5], {};
                  };
 
