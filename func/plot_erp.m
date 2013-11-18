@@ -361,15 +361,18 @@ function plot_erp(erpAll,chanlocs,plotPar,trig,analysis,paths,taskType,restoredC
                         spData.taskType = taskType;
                         spData.channelIndex = channels2plot(iChan);
 
-                        % IN DEVELOPMENT
-                        % if plotPar.runningStat
-                        %     % running statistics (one way RMANOVA) over each time point
-                        %     % in given range for current plot
-                        %     runningStat(erpAll,spData);
-                        % end
+                        if plotPar.runningStat
+                            % running statistics (one way RMANOVA) over each time point
+                            % in given range for current plot
+                            disp([':: Calculating statistics for plot ' ...
+                                  num2str(iPlot) ' in figure ' num2str(iFig)]);
+                            sigInt = runningStat(erpAll,spData);
+                        else
+                            sigInt = [];
+                        end
                         
                         % plot the current channel
-                        pHandle = subplotERP('statistics','channel data',chanData,'plot par',plotPar,'analysis',analysis);
+                        pHandle = subplotERP('statistics','channel data',chanData,'sig',sigInt,'plot par',plotPar,'analysis',analysis);
                         h = legend(pHandle,plotConds{iPlot});
                         set(h, 'Location', 'southwest');
                         

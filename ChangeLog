@@ -1,3 +1,28 @@
+2013-11-18  Martin Reiche  <reiche.stud@googlemail.com>
+
+	* lib/subplotERP.m (subplotERP): Implemented marking of
+	significant intervals determined by lib/runningStat.m
+
+	* lib/runningStat.m (runningStat): Included. Handles the whole
+	point-by-point rmanova procedure for a given ERP plot.
+
+	* lib/fdr.m: Included. Takes vector of p-values and returns new
+	p-value significance treshold.
+
+	* lib/OneWayrmAoV.m: Included. Calculates a one way repeated
+	measures ANOVA for each datapoint on given channel data. Returns
+	p-values for each test. The Script is based on - RMAOV1 -
+	Trujillo-Ortiz, A., R. Hernandez-Walls and
+	R.A. Trujillo-Perez. (2004). RMAOV1:One-way repeated measures
+	ANOVA. A MATLAB
+	file. (http://www.mathworks.com/matlabcentral/fileexchange)
+
+	* func/plot_erp.m (plot_erp): implemented point-by-point running
+	rmanova on ERP data
+
+	* config.m (config): added setting for point-by-point running
+	rmanova on ERP data
+
 2013-11-14  Martin Reiche  <reiche.stud@googlemail.com>
 
 	* triggerlabels.m: minor configuration changes

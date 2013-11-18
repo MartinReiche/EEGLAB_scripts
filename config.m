@@ -30,7 +30,7 @@
 function varargout = config(Method,varargin)
 %% ANALYSIS PARAMETERS %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % run preprocessing
-    analysis.preprocess = 1;
+    analysis.preprocess = 0;
     % perform parallel preprocessing 
     analysis.parallel = 1;
     % Cluster configuration 'local...' ('.singleCore' '.dualCore' ...)
@@ -56,7 +56,7 @@ function varargout = config(Method,varargin)
     % erp window
     analysis.erpWin = [-300 0];
     % baseline window 
-    analysis.baseWin = [-300 -200];
+    analysis.baseWin = [-100 0];
     % Number of Blocks
     analysis.nBlocks = 15;
     % Indices of Events to exclude 
@@ -109,6 +109,8 @@ function varargout = config(Method,varargin)
     % Subject, channel name, block
     % PASSIVE TASK
     chanInterp1 = {
+        4, 'E09', [1:15];
+        4, 'E16', [1:15];
         % 3, 62, [501 503 511];
         % 4, 45, [301 303];      
         % 6, 'P4', 16;
@@ -288,8 +290,10 @@ function varargout = config(Method,varargin)
     plotPar.xScale = analysis.erpWin;
     % run point by point RMANOVA in each plot
     plotPar.runningStat = 1;
+    % define alpha (q) level for fdr of running anova 
+    plotPar.alpha = 0.5;
     % define time window for running statistics
-    plotPar.runStatWin = [-300 0];
+    plotPar.runStatWin = analysis.erpWin;
     % horizontal axis coefficient
     plotPar.xCoef = 100;
     % vertical axis coefficient
@@ -354,7 +358,7 @@ function varargout = config(Method,varargin)
     % Overhead of voltage scaling (gets added to max values per figure)
     plotPar.yOverhead = 0.5;
     % Channels to plot with stats (per line)
-    plotPar.plotChannelsStat = {'E01'};
+    plotPar.plotChannelsStat = {'E02'};
     % plot topographies in color or grayscale
     plotPar.colorFlag = 1;
     % Figures to plot. Labels of curves within one Cell go in one

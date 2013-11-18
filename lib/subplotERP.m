@@ -25,6 +25,8 @@ for iArg = 1:2:length(varargin)
     switch lower(varargin{iArg})
       case 'channel data'
         chanData = varargin{iArg+1};
+      case 'sig'
+        sigInt = varargin{iArg+1};
       case 'plot par'
         plotPar = varargin{iArg+1};
       case 'analysis'
@@ -36,8 +38,6 @@ end
 
 
 %% get x scaling
-% get time resolution
-timeRes = 1000/analysis.sampRate;
 % get baseline in Seconds 
 baselineMs = abs(analysis.erpWin(1));
 % get time resolution
@@ -122,19 +122,7 @@ switch lower(method)
   case 'statistics'
     %% PLOTTING
     hold on;
-    % add component boxes
-    for nComp = 1:size(plotPar.comps,1)
-        if plotPar.compWin(nComp,2)-plotPar.compWin(nComp,1) > 0
-            % add marking of current component (window)
-            rectangle('Position',[plotPar.compWin(nComp,1) plotPar.yScale(1)...
-                                plotPar.compWin(nComp,2)-plotPar.compWin(nComp,1)...
-                                plotPar.yScale(2)-plotPar.yScale(1)],'FaceColor',[0.8 0.8 0.8],'EdgeColor','none');
-            % add component name of current window
-            text(plotPar.compWin(nComp,1),plotPar.yScale(1)-0.15*plotPar.yCoef,plotPar.comps{nComp},'FontSize',11);
-
-        end
-    end
-
+    
     % Draw the baseline interval
     if plotPar.drawBaseLine && analysis.rmBase
         % mark baseline
@@ -145,6 +133,53 @@ switch lower(method)
         % plot baseline label
         text(plotPar.baseWin(1)+10,plotPar.yScale(1)-0.15*plotPar.yCoef,'Baseline','FontSize',11);
     end
+
+    % add component boxes
+    for nComp = 1:size(plotPar.comps,1)
+        if plotPar.compWin(nComp,2)-plotPar.compWin(nComp,1) > 0
+            % add marking of current component (window)
+            rectangle('Position',[plotPar.compWin(nComp,1) plotPar.yScale(1)...
+                                plotPar.compWin(nComp,2)-plotPar.compWin(nComp,1)...
+                                plotPar.yScale(2)-plotPar.yScale(1)],'FaceColor',[0.8 0.8 0.8],'EdgeColor','none');
+            % add component name of current window
+            text(plotPar.compWin(nComp,1),plotPar.yScale(1)-0.15*plotPar.yCoef,plotPar.comps{nComp},'FontSize',11);
+            
+        end
+    end
+    
+    
+    % draw significant intervals
+    if plotPar.runningStat && ~isempty(sigInt)
+        % find start and end of significant intervals
+        foundStart = 0;
+        intCount = 0;
+        diffSig = [diff(sigInt) == 1 0];
+        for iInt = 1:size(diffSig,2)
+            if diffSig(1,iInt) && ~foundStart
+                % increase the interval counter
+                intCount = intCount + 1;
+                % save start of current interval
+                intBound(intCount,1) = sigInt(iInt);
+                foundStart = 1;
+            elseif ~diffSig(1,iInt) && foundStart
+               % save end of current interval
+               intBound(intCount,2) = sigInt(iInt);
+               foundStart = 0;
+            end
+        end
+        % draw significant intervalls
+        for iInt = 1:size(intBound,1)
+
+            % for each intervall
+            % determine start end end of current intervall in ms relative to epoch start
+            intStart = intBound(iInt,1) * timeRes + analysis.erpWin(1);
+            intDur = (intBound(iInt,2) * timeRes +  analysis.erpWin(1))-intStart;
+            % draw current intervall
+            rectangle('Position',[intStart -plotPar.yScale(2)*0.05 intDur plotPar.yScale(2)*0.05],...
+                      'FaceColor',[1 0.5 0.5],'EdgeColor','none');
+        end
+    end
+
 
     % draw tones 
     if plotPar.drawStim 
