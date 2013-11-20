@@ -9,13 +9,24 @@ function EEG = bipolarize(EEG,analysis)
 disp(':: Replacing: HEOG = LO1-LO2, VEOG = SO1-IO1');
 % initialize channel numbers
 eyeChanNum = [];
-for iChan = 1:size(EEG.chanlocs,2)
-    for iEyeChan = 1:size(analysis.eyeChan,2)
-        if strcmp(EEG.chanlocs(iChan).labels,analysis.eyeChan(:,iEyeChan))
-            eyeChanNum(iEyeChan)=iChan;
+switch analysis.rawFormat
+  case 'biosemi'
+    for iChan = 1:size(EEG.chanlocs,1)
+        for iEyeChan = 1:size(analysis.eyeChan,2)
+            if strcmp(EEG.chanlocs(iChan).labels,analysis.eyeChan{iEyeChan})
+                eyeChanNum(iEyeChan)=iChan;
+            end
         end
     end
-end
+  case 'brainvision'
+    for iChan = 1:size(EEG.chanlocs,2)
+        for iEyeChan = 1:size(analysis.eyeChan,2)
+            if strcmp(EEG.chanlocs(iChan).labels,analysis.eyeChan{iEyeChan})
+                eyeChanNum(iEyeChan)=iChan;
+            end
+        end
+    end
+end    
 %% Check if all eye channels were found and if perform bipolarization
 if size(eyeChanNum,2)==size(analysis.eyeChan,2)
     EEG.data(eyeChanNum(1),:,:)=EEG.data(eyeChanNum(1),:,:)-EEG.data(eyeChanNum(2),:,:);

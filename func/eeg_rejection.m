@@ -120,21 +120,34 @@ corrTrials = zeros(1,size(trig.triggers,1));
 %% Start Rejection for all files
 for iTrig = 1:size(trig.triggers,1)
 
+    % convert cell of trigger names to concatenated trigger string in
+    % case several triggers are selected at once
+    if iscell(trig.triggers{iTrig,1})
+        currTrig = num2str(cell2mat(trig.triggers{iTrig,1}),'%0.2d');
+    else
+        currTrig = num2str(trig.triggers{iTrig,1},'%0.2d');
+    end
+        
     % get current file
     filename = [subjDir paths.resFileSubSpec num2str(iSubj, '%0.2d')...
-                paths.resFileTrigSpec num2str(trig.triggers{iTrig,1},'%0.2d') 'all.set'];
+                paths.resFileTrigSpec currTrig 'all.set'];
     % if the current epoch file exists
     if exist(filename,'file')
         EEG = pop_loadset(filename);
         % Interpolation of predefined channels
-        EEG = interpChan(EEG,analysis,iSubj,trig.triggers{iTrig,1});
+        EEG = interpChan(EEG,analysis,iSubj,currTrig);
         % Select all events marked as iTrig
-        EEG2 = pop_selectevent(EEG,'type',trig.triggers{iTrig,1},'latency','-10 <= 10','deleteevents','off','deleteepochs','on');
+        if iscell(trig.triggers{iTrig,1})
+            EEG2 = pop_selectevent(EEG,'type',trig.triggers{iTrig,1},'latency','-10 <= 10','deleteevents','off','deleteepochs','on');
+        else
+            EEG2 = pop_selectevent(EEG,'type',trig.triggers(iTrig,1),'latency','-10 <= 10','deleteevents','off','deleteepochs','on');
+        end
+        
         clear EEG;
         % display number of events for the current trigger and the current subject before rejection
         disp(' ');
         disp([':: Subject ' num2str(iSubj, '%0.2d') ...
-              ' Trigger ' num2str(trig.triggers{iTrig,1}) ' ' num2str(size(EEG2.data,3)) ' Events original']);
+              ' Trigger ' currTrig ' ' num2str(size(EEG2.data,3)) ' Events original']);
         
         switch 1
           case analysis.rejmode == 0
@@ -161,7 +174,7 @@ for iTrig = 1:size(trig.triggers,1)
                 % channel in rejFile
                 if (nRej/size(EEG2.data,3)) > analysis.chanMaxRej
                     fprintf(rejFile,'%s\n',[':: Subject ' num2str(iSubj,'% 0.2d') ...
-                                        ' Trigger ' num2str(trig.triggers{iTrig,1}) ...
+                                        ' Trigger ' currTrig  ...
                                         ' channel ' num2str(iChannel) ' (' EEG2.chanlocs(iChannel).labels ') '...
                                         'rejected Epochs: ' num2str((nRej/size(EEG2.data,3))) ...
                                         ' %']);
@@ -186,7 +199,7 @@ for iTrig = 1:size(trig.triggers,1)
                 nFlat = numel(find(epochOut==1));
                 if nFlat
                     disp([':: Subject ' num2str(iSubj, '%0.2d') ...
-                          ' Trigger ' num2str(trig.triggers{iTrig,1}) ' ' num2str(nFlat) ' Events flat']);
+                          ' Trigger ' currTrig ' ' num2str(nFlat) ' Events flat']);
                     disp(':: These will be rejected');
                     % reject events with minimal amplitude change                       
                     EEG2.reject.rejmanual = epochOut;
@@ -195,11 +208,11 @@ for iTrig = 1:size(trig.triggers,1)
                     if analysis.rejFlatepochs && nFlat
                         fprintf(rejFile,'%s\n',['           ' num2str(nFlat) ' trials rejected for being flat']);
                     end
-                    disp([':: Subject ' num2str(iSubj, '%0.2d') ' Trigger ' num2str(trig.triggers{iTrig,1}) ' wrong number of trials']);
+                    disp([':: Subject ' num2str(iSubj, '%0.2d') ' Trigger ' currTrig ' wrong number of trials']);
                     
                 else
                     disp([':: Subject ' num2str(iSubj, '%0.2d') ...
-                          ' Trigger ' num2str(trig.triggers{iTrig,1}) [' minimum ' ...
+                          ' Trigger ' currTrig [' minimum ' ...
                                         'amplitude change: '] num2str(minChange) ' microV']);
                 end
             end 
@@ -234,13 +247,13 @@ for iTrig = 1:size(trig.triggers,1)
         EEG3 = pop_rejepoch(EEG2,EEG2.reject.rejglobal,0);
         EEG3 = pop_saveset(EEG3,[...
             paths.resFileSubSpec num2str(iSubj, '%0.2d')... 
-            paths.resFileTrigSpec num2str(trig.triggers{iTrig,1},'%0.2d') 'good' '.set'],subjDir);
+            paths.resFileTrigSpec currTrig 'good' '.set'],subjDir);
 
         %% get ERPs for current Subject %%%%%%%%%%%%%%%%%%%%%
         subErp(1,iTrig,:,:) = (squeeze(mean(EEG3.data,3)))';
         % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%            
 
-        disp([':: Subject ' num2str(iSubj, '%0.2d') ' Trigger ' num2str(trig.triggers{iTrig,1}) ' after correction: ' num2str(size(EEG3.data,3)) ' Events averaged']);
+        disp([':: Subject ' num2str(iSubj, '%0.2d') ' Trigger ' currTrig ' after correction: ' num2str(size(EEG3.data,3)) ' Events averaged']);
         % save number of usable trials
         corrTrials(1,iTrig) = size(EEG3.data,3);
         
@@ -255,7 +268,7 @@ for iTrig = 1:size(trig.triggers,1)
         EEG3 = pop_rejepoch(EEG2,mod(EEG2.reject.rejglobal+1,2),0);
         EEG3 = pop_saveset(EEG3,[...
             paths.resFileSubSpec num2str(iSubj, '%0.2d')... 
-            paths.resFileTrigSpec num2str(trig.triggers{iTrig,1},'%0.2d') 'bad' '.set'],subjDir);
+            paths.resFileTrigSpec currTrig 'bad' '.set'],subjDir);
         % save chanlocs
         if ~exist([paths.resDirAll 'chanlocs.mat'],'file')            
             disp(' ');
@@ -294,7 +307,7 @@ subTrialInd = cell(size(trig.triggers,1),1);
 for iTrig = 1:size(trig.triggers,1)
     % get current file
     filename = [subjDir paths.resFileSubSpec num2str(iSubj, '%0.2d')...
-                paths.resFileTrigSpec num2str(trig.triggers{iTrig,1},'%0.2d') 'good.set'];
+                paths.resFileTrigSpec currTrig 'good.set'];
     if exist(filename,'file')
         % load current file
         EEG = pop_loadset(filename);

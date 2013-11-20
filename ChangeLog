@@ -1,3 +1,27 @@
+2013-11-20  Martin Reiche  <reiche.stud@googlemail.com>
+
+	* func/segmentation.m (segmentation): Adjusted triggers to be
+	handled as strings. Added multi trigger selection routines.
+
+	* func/save_erp.m (save_erp): Adjusted triggers to be handled as
+	strings. Added multi trigger selection routines.
+
+	* func/retrigConf.m (retrigConf): Adjusted triggers to be handled
+	as strings. Added multi trigger selection routines.
+
+	* func/eeg_rejection.m (eeg_rejection): Adjusted triggers to be handled
+	as strings. Added multi trigger selection routines.
+
+	* func/bipolarize.m (bipolarize): Adjusted triggers to be handled
+	as strings. Added multi trigger selection routines.
+
+	* eeg_analysis.m (eeg_analysis): BioSig and Brainvision raw data
+	routines were merged. All triggertypes are now handled as strings
+	shortly after loading.
+
+	* func/checkFile.m (checkFile): Added. checkFileBioSig and
+	checkFileBv were merged to that file.
+
 2013-11-18  Martin Reiche  <reiche.stud@googlemail.com>
 
 	* lib/subplotERP.m (subplotERP): Implemented marking of

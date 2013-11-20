@@ -41,22 +41,35 @@ function eventCount = segmentation(EEG,trig,analysis,paths,eventCount,iFile,iSub
         for iTrig = 1:size(trig.triggers,1)
             if eventCount(iTrig,iFile) > 0 
                 % if there are available events for the current trigger type
-                disp([':: Extracting segments for Trigger ' num2str(trig.triggers{iTrig,1})]);
-                disp(' ');
-                
-                currTrig = trig.triggers{iTrig,1};
-                EEG2 = pop_epoch(EEG,{currTrig},[0.001*analysis.erpWin(1) ...
-                                    0.001*analysis.erpWin(2)]);
-                % if rejection mode is sorted averaging
-                if analysis.rejmode == 4
-                    % perform baseline correction
-                    EEG2 = pop_rmbase(EEG2,analysis.baseWin);
+                if iscell(trig.triggers{iTrig,1})
+                    for iLine = 1:size(trig.triggers{iTrig,1},2)
+                        disp([':: Extracting segments for Trigger ' trig.triggers{iTrig,1}{iLine}]);
+                    end
+                    disp(' ');
+                else
+                    disp([':: Extracting segments for Trigger ' trig.triggers{iTrig,1}]);
+                    disp(' ');
                 end
-                % save trigger set for current block
-                EEG2 = pop_saveset(EEG2,[paths.resFileSubSpec num2str(iSubj,'%0.2d')...
-                                    paths.resFileBlockSpec num2str(iFile, '%0.2d') ...
-                                    paths.resFileTrigSpec num2str(trig.triggers{iTrig,1},'%0.2d') ...
-                                    '.set'],paths.resDir);
+                % convert current triggers to cell array of strings
+                if iscell(trig.triggers{iTrig,1})
+                    currTrig = trig.triggers{iTrig,1};
+                else
+                    currTrig = {trig.triggers{iTrig,1}};
+                end
+
+                EEG2 = pop_epoch(EEG,currTrig,[0.001*analysis.erpWin(1) ...
+                                    0.001*analysis.erpWin(2)]);
+                
+                % save EEG
+                if iscell(trig.triggers{iTrig,1})
+                    EEG2 = pop_saveset(EEG2,[paths.resFileSubSpec num2str(iSubj,'%0.2d')...
+                                        paths.resFileTrigSpec num2str(cell2mat(trig.triggers{iTrig,1}),'%0.2d')...
+                                        'all.set'],paths.resDir);
+                else
+                    EEG2 = pop_saveset(EEG2,[paths.resFileSubSpec num2str(iSubj,'%0.2d')...
+                                        paths.resFileTrigSpec num2str(trig.triggers{iTrig,1},'%0.2d')...
+                                        'all.set'],paths.resDir);
+                end
                 disp(' ');
             end
         end
@@ -85,24 +98,43 @@ function eventCount = segmentation(EEG,trig,analysis,paths,eventCount,iFile,iSub
         for iTrig = 1:size(trig.triggers,1)
             if eventCount(iTrig) > 0
                 %if there are available events for the current trigger type
-                disp([':: Extracting segments for Trigger ' num2str(trig.triggers{iTrig,1})]);
-                disp(' ');
+                if iscell(trig.triggers{iTrig,1})
+                    for iLine = 1:size(trig.triggers{iTrig,1},2)
+                        disp([':: Extracting segments for Trigger ' trig.triggers{iTrig,1}{iLine}]);
+                    end
+                    disp(' ');
+                else
+                    disp([':: Extracting segments for Trigger ' trig.triggers{iTrig,1}]);
+                    disp(' ');
+                end
                 % convert current triggers to cell array of strings
-                currTrig = trig.triggers{iTrig,1};
-                EEG2 = pop_epoch(EEG,{currTrig},[0.001*analysis.erpWin(1) ...
-                                    0.001*analysis.erpWin(2)]);
+                if iscell(trig.triggers{iTrig,1})
+                    currTrig = trig.triggers{iTrig,1};
+                else
+                    currTrig = {trig.triggers{iTrig,1}};
+                end
+                EEG2 = pop_epoch(EEG,currTrig,[0.001*analysis.erpWin(1) 0.001*analysis.erpWin(2)]);
                 % save EEG
-                EEG2 = pop_saveset(EEG2,[paths.resFileSubSpec num2str(iSubj,'%0.2d')...
-                                    paths.resFileTrigSpec num2str(trig.triggers{iTrig,1},'%0.2d')...
-                                    'all.set'],paths.resDir);
+                if iscell(trig.triggers{iTrig,1})
+                    EEG2 = pop_saveset(EEG2,[paths.resFileSubSpec num2str(iSubj,'%0.2d')...
+                                        paths.resFileTrigSpec num2str(cell2mat(trig.triggers{iTrig,1}),'%0.2d')...
+                                        'all.set'],paths.resDir);
+                else
+                    EEG2 = pop_saveset(EEG2,[paths.resFileSubSpec num2str(iSubj,'%0.2d')...
+                                        paths.resFileTrigSpec num2str(trig.triggers{iTrig,1},'%0.2d')...
+                                        'all.set'],paths.resDir);
+                end
                 clear EEG2;
                 disp(' ');
+            elseif iscell(trig.triggers{iTrig,1})
+                for iLine = 1:size(trig.triggers{iTrig,1},2)
+                    disp([':: No available triggers found for event ' trig.triggers{iTrig,1}{iLine} ', skipping.']);
+                end
             else
-                disp([':: No available triggers found for event ' ...
-                     num2str(trig.triggers{iTrig,1}) ', skipping.']);
+                    disp([':: No available triggers found for event ' trig.triggers{iTrig,1} ', skipping.']);
             end
         end
-                
+        
         % save numbers of events in result dir of current subject
         disp(':: Saving initial number of events');
         save([paths.resDir paths.resFileSubSpec num2str(iSubj, '%0.2d') 'nTrials.mat'],'eventCount');

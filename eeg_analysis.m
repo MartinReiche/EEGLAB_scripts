@@ -105,7 +105,7 @@ function eeg_analysis(taskType,subjects,analysisIn,filtParIn,trigIn,batchMode)
         end
         
         % over all subjects
-        parfor iSubj = 1:size(subjects,2)
+        for iSubj = 1:size(subjects,2)
 
             %% Get Parameters
             if batchMode
@@ -130,7 +130,6 @@ function eeg_analysis(taskType,subjects,analysisIn,filtParIn,trigIn,batchMode)
                 analysis.jobIndex = 0;
                 analysis.batchMode = 0;
             end    
-
             
             %% Add Paths
             % get Paths
@@ -149,9 +148,6 @@ function eeg_analysis(taskType,subjects,analysisIn,filtParIn,trigIn,batchMode)
             % check availabel raw data and configure raw data paths
             paths = checkRawData(paths,subjects,taskType);
 
-            % % start measuring time for Analysis
-            % tStart = tic;
-
             % save subjects vector in analysis struct
             analysis.subjects = subjects;
             % prepare matrix for counting of available events for each subjects
@@ -168,12 +164,7 @@ function eeg_analysis(taskType,subjects,analysisIn,filtParIn,trigIn,batchMode)
                 % load raw data for current file and stimulation parameters
                 [EEG, block,analysis, paths] = loadRawData(paths, subjects(iSubj),taskType,iFile,analysis,counter);
                 % check parameters (sampling rate, triggers etc)
-                switch analysis.rawFormat
-                  case 'biosemi'
-                    [EEG, eventExcp] = checkFileBiosig(EEG,subjects(iSubj),iFile,block,taskType,analysis,trig);
-                  case 'brainvision'
-                    [EEG, eventExcp] = checkFileBv(EEG,subjects(iSubj),iFile,block,taskType,analysis,trig);
-                end
+                [EEG, eventExcp] = checkFile(EEG,subjects(iSubj),iFile,block,taskType,analysis,trig);
                 % Retriggering and systematically exclude events from analysis
                 EEG = change_trig(EEG,analysis,trig,iFile,condOrder,taskType); 
                 % bipolarize eye channels
@@ -240,6 +231,7 @@ function eeg_analysis(taskType,subjects,analysisIn,filtParIn,trigIn,batchMode)
         % combine subject data, calculate amount of usable data and save
         % erpAll
         tEnd = toc(tStart);
+
         save_erp(subErp,subErpEqual,subTrialInd,corrTrials,numEvent,rejEpoch,trialNum,subjects,paths,trig,tStart,tEnd,analysis,filtPar);
 
         disp(' ');

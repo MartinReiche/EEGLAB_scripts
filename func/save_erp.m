@@ -160,6 +160,15 @@ for iSubj = 1:size(subjects,2)
     % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
     for iTrig = 1:size(trig.triggers,1)
+        
+        % convert cell of trigger names to concatenated trigger string in
+        % case several triggers are selected at once
+        if iscell(trig.triggers{iTrig,1})
+            currTrig = num2str(cell2mat(trig.triggers{iTrig,1}),'%0.2d');
+        else
+            currTrig = num2str(trig.triggers{iTrig,1},'%0.2d');
+        end
+                
         % Get Proportion of usable Data for current subject and trigger
         corrProp(iSubj,iTrig) = corrTrials(iSubj,iTrig)/eventCount(iTrig);
         if isnan(corrProp(iSubj,iTrig))
@@ -167,9 +176,9 @@ for iSubj = 1:size(subjects,2)
         end
         
         % Display usable Data for current subject and trigger and store in rejFile
-        disp(['Trigger ' num2str(trig.triggers{iTrig,1}) ' ' num2str(corrTrials(iSubj,iTrig)) ' Events averaged = '...
+        disp(['Trigger ' currTrig ' ' num2str(corrTrials(iSubj,iTrig)) ' Events averaged = '...
               num2str(round(corrProp(iSubj,iTrig)*100)) '%']);
-        fprintf(rejFile,'%s\n',['Trigger ' num2str(trig.triggers{iTrig,1}) ' ' num2str(corrTrials(iSubj,iTrig)) ' Events averaged = '...
+        fprintf(rejFile,'%s\n',['Trigger ' currTrig ' ' currTrig ' Events averaged = '...
                             num2str(round(corrProp(iSubj,iTrig)*100)) '%']);
         disp(' ');
     end
@@ -189,8 +198,17 @@ for iSubj = 1:numel(subjects)
     disp(' ');
     disp([':: Subject ' num2str(subjects(iSubj), '%0.2d') ' ' num2str(round(mean(corrProp(iSubj,:))*1000)/10) '% usable data across conditions ']);
     for iTrig = 1:size(trig.triggers,1)
+        
+        % convert cell of trigger names to concatenated trigger string in
+        % case several triggers are selected at once
+        if iscell(trig.triggers{iTrig,1})
+            currTrig = num2str(cell2mat(trig.triggers{iTrig,1}),'%0.2d');
+        else
+            currTrig = num2str(trig.triggers{iTrig,1},'%0.2d');
+        end
+        
         if corrProp(iSubj,iTrig) < 0.8
-            disp(['subject ' num2str(iSubj, '%0.2d') ' trigger ' num2str(trig.triggers{iTrig,1}) ' '...
+            disp(['subject ' num2str(iSubj, '%0.2d') ' trigger ' currTrig ' '...
                   num2str(corrTrials(iSubj,iTrig)) ' trials averaged = ' num2str(round(corrProp(iSubj,iTrig)*100)) '%']);
         end
     end

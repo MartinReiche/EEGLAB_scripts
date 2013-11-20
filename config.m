@@ -30,12 +30,12 @@
 function varargout = config(Method,varargin)
 %% ANALYSIS PARAMETERS %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % run preprocessing
-    analysis.preprocess = 0;
+    analysis.preprocess = 1;
     % perform parallel preprocessing 
     analysis.parallel = 1;
     % Cluster configuration 'local...' ('.singleCore' '.dualCore' ...)
     % ex 'local.tripleCore'
-    analysis.core = 'local.dualCore';
+    analysis.core = 'local.quadCore';
     % filter the data
     analysis.filterFlag = 1;
     % raw data format (options: 'biosemi', 'brainvision')
@@ -48,7 +48,7 @@ function varargout = config(Method,varargin)
     % Rejection mode (0: no rejection, 1 delta rejection, 2 delta + eye
     % correction, 3 reject events specified in file, 4 sorted averaging
     % [not yet implemented])
-    analysis.rejmode = 2;
+    analysis.rejmode = 1;
     % perform baseline correction (this option is only available for
     % rejection modes other than sorted averaging, with sorted averaging
     % baseline correction will always be performed
@@ -423,6 +423,7 @@ switch lower(Method)
        error([':: ''task'', ''filt'' and ''analysis'' is required for input Method ''' Method '''']) 
     end
     
+    paths.rawDir = [paths.rawDir paths.taskLabel{taskType}];
     paths.behavDir = [paths.behavDir paths.taskLabel{taskType}];
     paths.topoDir = [paths.resDir paths.taskLabel{taskType} paths.topoDir];
     
@@ -496,7 +497,7 @@ switch lower(Method)
     % build trigger and label arrays for given task
     for iTrig = 1:size(trig.triggers,1)
         if ismember(taskType,trig.triggers{iTrig,3})
-            trig.newTriggers = [trig.newTriggers; trig.triggers{iTrig,1}];
+            trig.newTriggers = {trig.newTriggers; trig.triggers{iTrig,1}};
             trig.trigLabels = [trig.trigLabels; trig.triggers{iTrig,2}];
             trig.color = [trig.color; trig.triggers{iTrig,4:5}];
         end

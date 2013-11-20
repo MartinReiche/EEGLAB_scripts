@@ -29,18 +29,18 @@ function reTrig = retrigConf(iFile,condOrder)
 reTrig = {
 % NEW
 % change certain proximal[+] distal[+]
-    [41],          ((100 * condOrder(iFile)) + 41);  
+    {'41'},         num2str((100 * condOrder(iFile)) + 41);  
 % change certain proximal[+] distal[-]
-    [42],          ((100 * condOrder(iFile)) + 42);  
+    {'42'},         num2str((100 * condOrder(iFile)) + 42);  
 % repetition possible proximal[+] distal[+]
-    [43],          ((100 * condOrder(iFile)) + 43);  
+    {'43'},         num2str((100 * condOrder(iFile)) + 43);  
 % repetition possible proximal[+] distal[-]
-    [44],          ((100 * condOrder(iFile)) + 44);  
+    {'44'},         num2str((100 * condOrder(iFile)) + 44);  
 % repetition possible proximal[-] distal[+]
-    [45],          ((100 * condOrder(iFile)) + 45);  
+    ['45'},         num2str((100 * condOrder(iFile)) + 45);  
 % repetition possible proximal[-] distal[-]
-    [46],          ((100 * condOrder(iFile)) + 46);  
+    {'46'},         num2str((100 * condOrder(iFile)) + 46);  
 % TENTATIVE
-    [7],           ((100 * condOrder(iFile)) + 7);  
+    {'7'},          num2str((100 * condOrder(iFile)) + 7);  
          };
 end
