@@ -62,15 +62,15 @@ batch_analysis.m and start the analysis using batch_analysis([job_numbers])
 instead of using eeg_analysis.
 
 ALREADY IMPLEMENTED:
-- the whole preprocessing procedure for brainvision recorder data
+- the whole preprocessing procedure for brainvision recorder and BioSemi data
 - plotting of ERP data in 'electrode array' and 'statistics' mode
+- running t-test or running one-way RMANOVA with FDR correction over given  
+  range of data-points
 
 NOT YET IMPLEMENTED:
 - plotting of voltage maps and SCD maps
 - statistical testing
   - RMANOVA for predefined statistical factors
-  - running t-test or running one-way RMANOVA with FDR correction over given 
-  range of data-points
 - several plot callback functions
 - Cluster mode (run analysis on a remote HPC cluster)
 
@@ -335,8 +335,25 @@ func/singleERP.m
 Function called by SubplotCallback. Plots single channel ERP with
 statistics when clicked on a subplot.
 -----------------------------------------------------------------------------
+lib/runningStat.m
 
+Perform running one-way ANOVA over each time point at given Channel and return
+significance index over a predefined time range (default: whole time range of
+epoch, see config.m to adjust time range [plotPar.runningStatWin]). Output
+vector [sigInt] contains indices of datapoints which reach significance
+according to fdr with diven q value (plotPar.alpha) in config.m
+-----------------------------------------------------------------------------
+lib/OneWayrmAoV.m
 
+Perform one way repeated measures analysis of variance RMANOVA. Takes
+Data in matrix form where lines represent the subjects with the data of
+severeal factors represented by columns.
+-----------------------------------------------------------------------------
+/lib/fdr.m
 
+Takes vector of P-values and a given q-value and returns significance
+threshold based on false discovery rate. The q value is equal to the alpha
+value. Can be adjusted in config.m (see plotPar.alpha)
+-----------------------------------------------------------------------------
 
 
