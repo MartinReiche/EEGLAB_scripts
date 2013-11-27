@@ -19,9 +19,17 @@
 
 function paths = prepSubDir(paths,subjects,iSubj)
 
+for iDir = 1:size(paths.subDirs,1)
+   if strcmp([paths.rawSubFolderPrefix num2str(subjects(iSubj), '%0.2d')],paths.subDirs(iDir).name);
+       subDirInd = iDir;
+   else
+       error([':: Did not find raw data folder for subject ' num2str(subjects(iSubj))]);
+   end
+end
+
 % change results and raw paths according to subject
-paths.rawDir = [paths.rawDirAll paths.subDirs(subjects(iSubj)).name '/'];
-paths.resDir = [paths.resDirAll paths.subDirs(subjects(iSubj)).name '/'];
+paths.rawDir = [paths.rawDirAll paths.subDirs(subDirInd).name '/'];
+paths.resDir = [paths.resDirAll paths.subDirs(subDirInd).name '/'];
 % Get all file names of current subject
 paths.allFiles = dir([paths.rawDir '*' paths.rawFileExt]);
 

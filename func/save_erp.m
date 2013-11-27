@@ -25,13 +25,17 @@ subErpEqual = cell2mat(subErpEqual);
 % initialize cell array for indices of rejected epochs
 rejEpochs = cell(max(subjects),size(trig.triggers,1));
 
-%% Initialize ERP matrix
+% delete paths.allFiles field
+if isfield(paths,'allFiles')
+   disp(':: Removing field ''allFiles'' from path structure');
+   rmfield(paths,'allFiles');
+end
 
+%% Initialize ERP matrix
 if ~analysis.batchMode && exist([paths.resDirAll paths.erpFileName],'file')
     disp(' ');
     in = input([':: ERP File already exists, do you want to use this one and ' ...
                 'overwrite the data for the given Subjects? (Y/n)'],'s');
-    
     answ = 1;
     while answ
         if (strcmpi(in,'Y')) || isempty(in)
@@ -93,6 +97,9 @@ if ~analysis.batchMode && exist([paths.resDirAll paths.erpFileName],'file')
         end
     end
 else
+    
+    paths
+
     disp(':: Did not find file, creating new one.');
     % initialize erpAll matrices
     erpAll = zeros(max(subjects),...

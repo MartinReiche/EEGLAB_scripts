@@ -1,5 +1,18 @@
 2013-11-27  Martin Reiche  <reiche.stud@googlemail.com>
 
+	* func/plot_erp.m: Error bars are only plotted when there is more
+	then one subject. Otherwise meaningles to plot SEM, computes SEM
+	anyway due to dimension reshaping if erpAll contains only one
+	subject. Hence the new behavior. 
+
+	* func/prepSubDir.m: Fixed minor bug. Was unable to read raw data
+	folders of available subjects.
+
+	* func/save_erp.m: Fixed a bug concerning concatenating procedure
+	of erp structure when perfroming additional
+	analyses. erp.path.allFiles won't be saved anymore because it only
+	contains data of the subject which was processed at last.
+
 	* func/reReference.m: Added. Perform rereferencing before
 	calculation of difference waves and plotting procedure. Can be
 	enabled and disabled in config by variable analysis.reref. New

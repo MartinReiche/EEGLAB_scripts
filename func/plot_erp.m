@@ -293,6 +293,9 @@ function plot_erp(erpAll,chanlocs,plotPar,trig,analysis,paths,taskType,restoredC
                         end
                     end
                 end
+                
+                erpAll
+                
                 % only when there are waves to plot for the current task
                 if ~isempty(plotConds)        
                     % get minimal and maximal value for current figure
@@ -383,6 +386,7 @@ function plot_erp(erpAll,chanlocs,plotPar,trig,analysis,paths,taskType,restoredC
                         % for each component window
                         erpMean = zeros(size(plotPar.compWin,1),size(chanData,2));
                         erpErr = erpMean;
+                        
                         for iWin = 1:size(plotPar.compWin,1)
                             
                             statWin = [round(((plotPar.compWin(iWin,1)+abs(plotPar.xScale(1)))*analysis.sampRate)/1000) ...
