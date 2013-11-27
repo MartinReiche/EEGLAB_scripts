@@ -126,8 +126,8 @@ clear erp;
 % get current trigger parameters
 currTrigPars = config('triggers','task',taskType);
 
-% build trigger and label arrays for given task
 
+% build trigger and label arrays for given task
 for iTrig = 1:size(trig.triggers,1)
     labelFound = 0;
     for iCurrTrig = 1:size(currTrigPars.triggers,1)
@@ -177,7 +177,10 @@ end
 
 % Select current Subjects
 erpAll = erpAll(subjects(:),:,:,:);
-
+% rereference electrodes
+if analysis.reref
+    erpAll = reReference(erpAll,chanlocs,analysis);
+end
 % perform baseline correction
 erpAll = baseline_corr(erpAll,analysis);
 
@@ -189,24 +192,31 @@ for iDiff = 1:size(trig.diffInd,1)
     trig.diffInd{iDiff,3} = size(erpAll,2);
 end
 
-% check whether new difference waves from diffference waves should bbe formed
+% check whether new difference waves from diffference waves should be formed
 trig.diffInd2 = {};
+newCol = [ ];
 iCount = 0;
 iMin = [];
 iSub = [];
-for iDiff = 1:size(trig.diffWaves,1)
+
+
+for iDiff = 1:size(currTrigPars.diffWaves,1)
+
     for iTrig = 1:size(trig.diffInd,1)
+
         switch 1
-          case strcmp(trig.diffInd{iTrig,2},trig.diffWaves{iDiff,1})
+            
+          case strcmp(trig.diffInd{iTrig,2},currTrigPars.diffWaves{iDiff,1})
             % find Index of minuend
             iMin = trig.diffInd{iTrig,3};
             
-          case strcmp(trig.diffInd{iTrig,2},trig.diffWaves{iDiff,2})
+          case strcmp(trig.diffInd{iTrig,2},currTrigPars.diffWaves{iDiff,2})
             % find Index of subtrahend
             iSub = trig.diffInd{iTrig,3};
             
         end
     end
+
     if ~isempty(iMin) && ~isempty(iSub)
         % if Subtrahend and minuend was found for current difference wave
         % raise count variable
@@ -214,10 +224,14 @@ for iDiff = 1:size(trig.diffWaves,1)
         % save index of minuend and subtrahend
         trig.diffInd2{iCount,1} = [iMin iSub];
         % save the corresponding difference wave label
-        trig.diffInd2{iCount,2} = trig.diffWaves{iDiff,3};
+        trig.diffInd2{iCount,2} = currTrigPars.diffWaves{iDiff,3};
+        % newCol
         % clear minuend and subtrahend index variables
         iMin =  [];
         iSub = [];
+        % get the color index of the current difference wave and store it in trigger
+        % struct
+        trig.diffCol(iDiff,1:2) = cell2mat(currTrigPars.diffWaves(iDiff, 4:5));
     end
 end
 
@@ -231,3 +245,4 @@ end
 
 % Concatenate new and old trig.diffInd
 trig.diffInd = [trig.diffInd; trig.diffInd2];
+

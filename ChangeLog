@@ -1,3 +1,20 @@
+2013-11-27  Martin Reiche  <reiche.stud@googlemail.com>
+
+	* func/reReference.m: Added. Perform rereferencing before
+	calculation of difference waves and plotting procedure. Can be
+	enabled and disabled in config by variable analysis.reref. New
+	reference channel is specified in variale analysis.rerefChan. If
+	several channels are specified as reference channel, the
+	rereferencing will be carried out against the average of the
+	specied rereference channels.
+
+2013-11-25  Martin Reiche  <reiche.stud@googlemail.com>
+
+	* func/calc_diff.m: Implemented optional rereferencing before
+	baseline correction.
+
+	* config.m: Added settings for rereferencing procedure.
+
 2013-11-20  Martin Reiche  <reiche.stud@googlemail.com>
 
 	* func/segmentation.m (segmentation): Adjusted triggers to be

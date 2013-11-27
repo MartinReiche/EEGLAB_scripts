@@ -267,6 +267,16 @@ Asks the user wich of the processed files to read. Reads in the Data and
 calculates the difference waves as specified in triggerlabels.m and performs
 the baseline correction if enabled.
 -----------------------------------------------------------------------------
+func/reReference.m
+
+Perform rereferencing before
+calculation of difference waves and plotting procedure. Can be
+enabled and disabled in config by variable analysis.reref. New
+reference channel is specified in variale analysis.rerefChan. If
+several channels are specified as reference channel, the
+rereferencing will be carried out against the average of the
+specied rereference channels.
+-----------------------------------------------------------------------------
 func/baseline_corr.m
 
 Takes erpAll data and performs baseline correction if analysis.rmBase is

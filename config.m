@@ -32,10 +32,10 @@ function varargout = config(Method,varargin)
 % run preprocessing
     analysis.preprocess = 1;
     % perform parallel preprocessing 
-    analysis.parallel = 1;
+    analysis.parallel = 0;
     % Cluster configuration 'local...' ('.singleCore' '.dualCore' ...)
     % ex 'local.tripleCore'
-    analysis.core = 'local.quadCore';
+    analysis.core = 'local.dualCore';
     % filter the data
     analysis.filterFlag = 1;
     % raw data format (options: 'biosemi', 'brainvision')
@@ -48,11 +48,16 @@ function varargout = config(Method,varargin)
     % Rejection mode (0: no rejection, 1 delta rejection, 2 delta + eye
     % correction, 3 reject events specified in file, 4 sorted averaging
     % [not yet implemented])
-    analysis.rejmode = 1;
+    analysis.rejmode = 2;
     % perform baseline correction (this option is only available for
     % rejection modes other than sorted averaging, with sorted averaging
     % baseline correction will always be performed
     analysis.rmBase = 0;
+    % enable/disable rereferencing
+    analysis.reref = 0;
+    % new reference channel (several electrodes are given here, than the
+    % new reference will be the average of the given electrodes)
+    analysis.rerefChan = {' ' ' '};
     % erp window
     analysis.erpWin = [-300 0];
     % baseline window 
