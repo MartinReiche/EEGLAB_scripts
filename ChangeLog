@@ -1,3 +1,11 @@
+2013-11-28  Martin Reiche  <reiche.stud@googlemail.com>
+
+	* func/prepSubDir.m: Fixed a minor bug in the check procedure of
+	availability of raw data.
+
+	* func/checkFile.m (checkFile): Added conversion of old triggers
+	(EEG.urevent) to strings.
+
 2013-11-27  Martin Reiche  <reiche.stud@googlemail.com>
 
 	* func/plot_erp.m: Error bars are only plotted when there is more
@@ -44,7 +52,7 @@
 
 	* func/bipolarize.m (bipolarize): Adjusted triggers to be handled
 	as strings. Added multi trigger selection routines.
-
+ 
 	* eeg_analysis.m (eeg_analysis): BioSig and Brainvision raw data
 	routines were merged. All triggertypes are now handled as strings
 	shortly after loading.

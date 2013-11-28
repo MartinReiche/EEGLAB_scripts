@@ -26,6 +26,7 @@ switch analysis.rawFormat
     disp(':: Converting all triggers to strings');
     for iTrig = 1:size(EEG.event,2)
         EEG.event(iTrig).type = num2str(EEG.event(iTrig).type);
+        EEG.urevent(iTrig).type = num2str(EEG.urevent(iTrig).type);
     end
     % convert triggers to strings from stimulation file
     trigger = cell(size(stimPars.pars,2),1);

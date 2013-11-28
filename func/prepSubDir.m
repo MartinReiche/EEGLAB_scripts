@@ -19,12 +19,16 @@
 
 function paths = prepSubDir(paths,subjects,iSubj)
 
+foundDir = 0;
 for iDir = 1:size(paths.subDirs,1)
    if strcmp([paths.rawSubFolderPrefix num2str(subjects(iSubj), '%0.2d')],paths.subDirs(iDir).name);
        subDirInd = iDir;
-   else
-       error([':: Did not find raw data folder for subject ' num2str(subjects(iSubj))]);
-   end
+       foundDir = 1;
+   end       
+end
+
+if ~foundDir
+    error([':: Did not find raw data folder for subject ' num2str(subjects(iSubj))]);
 end
 
 % change results and raw paths according to subject
