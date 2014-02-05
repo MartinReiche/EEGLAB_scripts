@@ -95,7 +95,11 @@ elseif size(erpFile,1) == 1
     end
 
 else
-    error('Did not find a ERP file');
+    disp('Did not find a ERP file, please select.');
+    uiopen('load')
+    disp(' ');
+    disp(':: Loadind ERP file');
+    disp(' ');
 end
 
 % retrieve erpAll from erp structure
@@ -169,7 +173,7 @@ for iDiff = 1:size(currTrigPars.diffWaves,1)
         iSub = [];
         % get the color index of the current difference wave and store it in trigger
         % struct
-        trig.diffCol(iCount,1:2) = cell2mat(currTrigPars.diffWaves(iCount, 4:5));
+        trig.diffCol(iCount,1:2) = cell2mat(currTrigPars.diffWaves(iDiff, 4:5));
     end
 end
 

@@ -33,14 +33,6 @@ end
 
 % define trigger range of omissions
 
-switch analysis.rawFormat
-  case 'biosemi'
-    omissionRange = [13 14 23 24 33 34 43 44 53 54];
-  case 'brainvision'
-    omissionRange = {'S 13' 'S 14' 'S 23' 'S 24' 'S 33' 'S 34' 'S 43'...
-                     'S 44' 'S 53' 'S 54'};
-end
-
 %% Exclusion of trials in predefined ranges around omissions and responses
 for iTrig = 1:size(EEG.event,2)    
     % go through all events in current block and check for response triggers
@@ -57,7 +49,7 @@ for iTrig = 1:size(EEG.event,2)
             preRange = ((EEG.event(iPreTrig).latency / analysis.sampRate) - (EEG.event(iTrig).latency / analysis.sampRate)) * 1000;
             if preRange >= analysis.respEx(1)
                 % if the current event is not an omission or a response
-                if ~ismember(EEG.event(iPreTrig).type,omissionRange) |  ~strcmp(EEG.event(iPreTrig).type,analysis.respTrig)
+                if ~ismember(EEG.event(iPreTrig).type,analysis.omissionRange) |  ~strcmp(EEG.event(iPreTrig).type,analysis.respTrig)
                     EEG.event(iPreTrig).type = analysis.exclTrig;
                 end
             else
@@ -73,7 +65,7 @@ for iTrig = 1:size(EEG.event,2)
             postRange = ((EEG.event(iPostTrig).latency / analysis.sampRate) - (EEG.event(iTrig).latency / analysis.sampRate)) * 1000;
             if postRange <= analysis.respEx(2)
                 % if the current event is not an omission or a response
-                if ~ismember(EEG.event(iPostTrig).type,omissionRange) | ~strcmp(EEG.event(iPostTrig).type,analysis.respTrig)
+                if ~ismember(EEG.event(iPostTrig).type,analysis.omissionRange) | ~strcmp(EEG.event(iPostTrig).type,analysis.respTrig)
                     EEG.event(iPostTrig).type = analysis.exclTrig;
                 end
             else
@@ -81,7 +73,7 @@ for iTrig = 1:size(EEG.event,2)
             end
         end
     end
-    if ismember(EEG.event(iTrig).type,omissionRange)
+    if ismember(EEG.event(iTrig).type,analysis.omissionRange)
         %% IF OMISSION TRIGGER IS ENCOUNTERED
         iPreTrig = iTrig;
         iPostTrig = iTrig;
@@ -94,7 +86,7 @@ for iTrig = 1:size(EEG.event,2)
             preRange = ((EEG.event(iPreTrig).latency / analysis.sampRate) - (EEG.event(iTrig).latency / analysis.sampRate)) * 1000;
             if preRange >= analysis.omEx(1)
                 % if the current event is not an omission or a response
-                if ~ismember(EEG.event(iPreTrig).type,omissionRange) || ~strcmp(EEG.event(iPreTrig).type,analysis.respTrig)
+                if ~ismember(EEG.event(iPreTrig).type,analysis.omissionRange) || ~strcmp(EEG.event(iPreTrig).type,analysis.respTrig)
                     EEG.event(iPreTrig).type = analysis.exclTrig;
                 end
             else
@@ -110,7 +102,7 @@ for iTrig = 1:size(EEG.event,2)
             postRange = ((EEG.event(iPostTrig).latency / analysis.sampRate) - (EEG.event(iTrig).latency / analysis.sampRate)) * 1000;
             if postRange <= analysis.omEx(2)
                 % if the current event is not an omission or a response
-                if ~ismember(EEG.event(iPostTrig).type,omissionRange) || ~strcmp(EEG.event(iPostTrig).type,analysis.respTrig)
+                if ~ismember(EEG.event(iPostTrig).type,analysis.omissionRange) || ~strcmp(EEG.event(iPostTrig).type,analysis.respTrig)
                     EEG.event(iPostTrig).type = analysis.exclTrig;
                 end
             else
@@ -127,7 +119,7 @@ if taskType == 2
     for iTrig = 1:size(EEG.event,2)
         
         % if the EEG Event is an omission
-        if ismember(EEG.event(iTrig).type,omissionRange)
+        if ismember(EEG.event(iTrig).type,analysis.omissionRange)
             eventLat(omissionCount,1) = EEG.event(iTrig).latency;
             eventLat(omissionCount,3) = iTrig;
             omissionCount = omissionCount + 1;
@@ -151,7 +143,7 @@ end
 
 % change the triggers as indiated by func/retrigConf.m
 if analysis.changeTrig 
-    reTrig = retrigConf(iFile,condOrder);
+    reTrig = triggerlabels('retrig',trig,taskType)
     % retrigger events
     disp(':: Retriggering');
     % start retriggering according to specified triggers in retrigConf.m

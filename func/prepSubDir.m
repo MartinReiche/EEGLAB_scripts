@@ -17,18 +17,18 @@
 % You should have received a copy of the GNU General Public License
 % along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-function paths = prepSubDir(paths,subjects,iSubj)
+function paths = prepSubDir(paths,iSubj)
 
 foundDir = 0;
 for iDir = 1:size(paths.subDirs,1)
-   if strcmp([paths.rawSubFolderPrefix num2str(subjects(iSubj), '%0.2d')],paths.subDirs(iDir).name);
+   if strcmp([paths.rawSubFolderPrefix num2str(iSubj, '%0.2d')],paths.subDirs(iDir).name);
        subDirInd = iDir;
        foundDir = 1;
    end       
 end
 
 if ~foundDir
-    error([':: Did not find raw data folder for subject ' num2str(subjects(iSubj))]);
+    error([':: Did not find raw data folder for subject ' num2str(iSubj)]);
 end
 
 % change results and raw paths according to subject
@@ -45,13 +45,13 @@ if size(dir([paths.resDir ...
     % if some old epoch files already existed, delete them
     disp(' ');
     disp([':: Detected old epoch files for subject ' ...
-          num2str(subjects(iSubj),'%0.2d') ', deleting them']);
+          num2str(iSubj,'%0.2d') ', deleting them']);
     delete([paths.resDir '*' paths.resFileBlockSpec '*']);
 end
 
 % check whether the subjects results folder already exists and if not
 % create it
 if ~exist(paths.resDir)
-    disp([':: Creating folder for subject ' num2str(subjects(iSubj), '%0.2d')]);
+    disp([':: Creating folder for subject ' num2str(iSubj, '%0.2d')]);
     mkdir(paths.resDir);
 end

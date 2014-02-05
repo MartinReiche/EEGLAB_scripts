@@ -1,26 +1,34 @@
 % Metascript to adjust analysis parameters and run through all analysis
 % steps using EEGLAB
 %
-% possible rejection candidates: ??
+% USAGE: 
+% in serial mode:       eeg_analysis(taskType,[numbers of subjects])
+% in parallel mode:     eeg_analysis(taskType,[numbers of subjects],'parallelMethod')
+% 
+%  'parallelMethod':    'submitJob' - submit prprocessing job to cluster
+%                       'getJob' - retrieve preprocessed job data from cluster
+%                       'plot' - omit preprocessing and plot processed data
 %
-% Needs: 
-% eeg_emcp - Andreas Widmann (http://github.com/widmann)
-% firfilt 1.5 - Andreas Widmann (http://github.com/widmann)
+% NEEDS:
+% 
+% EEGLAB 13    - A Delorme & S Makeig (2004) EEGLAB: an open source toolbox 
+%                for analysis of single-trial EEG dynamics. 
+%                Journal of Neuroscience Methods 134:9-21 
+% bv-io        - can be installed via EEGLAB extension manager 
+% eeg_emcp     - Andreas Widmann (http://github.com/widmann)
+% firfilt 1.6  - Andreas Widmann (http://github.com/widmann)
 % eeg_rejdelta - Andreas Widmann (http://github.com/widmann)
-% RMAOV1 - Trujillo-Ortiz, A., R. Hernandez-Walls and
-%      R.A. Trujillo-Perez. (2004). RMAOV1:One-way repeated measures ANOVA. A
-%      MATLAB file. [WWW document]. URL
-%      http://www.mathworks.com/matlabcentral/
-%      fileexchange/loadFile.do?objectId=5576
+% RMAOV1       - Trujillo-Ortiz, A., R. Hernandez-Walls and
+%                R.A. Trujillo-Perez. (2004). RMAOV1:One-way repeated measures ANOVA. A
+%                MATLAB file. URL: http://www.mathworks.com/matlabcentral/
+%                fileexchange/loadFile.do?objectId=5576
 %
 % Files you need to configure:
 % - config (central configuration file)
 % - triggerlabels.m (configuratiuon of trigger labels)
-% - func/retrigConf.m (configuration for retriggering)
-% - func/changeTrig.m (define trigger range for omissions [for exclusions
-%   around those events])
+% - channelInterp.m (configuration of to-be-interpolated channels for given subjects)
 %
-% Copyright (c) 2013 Martin Reiche, Carl-von-Ossietzky-University Oldenburg
+% Copyright (c) 2014 Martin Reiche, Carl-von-Ossietzky-University Oldenburg
 % Author: Martin Reiche, martin.reiche@uni-oldnburg.de
 
 % This program is free software: you can redistribute it and/or modify
@@ -37,211 +45,224 @@
 % along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 % Please define all parameters in config.m
-function eeg_analysis(taskType,subjects,analysisIn,filtParIn,trigIn,batchMode)
+function [sched,job] = eeg_analysis(taskType,subjects,parallelMode)
 
-    tStart = tic; % start measuring time for Analysis
-    
-    %% Get Parameters
-    if nargin > 2
-        % Get analysis parameters from input arguments [batch mode]
-        analysis = analysisIn;
-        % save subjects vector in analysis struct from input arguments [batch mode]
-        analysis.subjects = subjects;
-        % Get filter parameters from input arguments [batch mode]
-        filtPar = filtParIn;
-        % Load trigger Matrix for current task from input arguments [batch mode]
-        trig = trigIn;
-        analysis.batchMode = 1;
-        analysis.preprocess = 1;
-    else
-        % Get analysis parameters
-        analysis = config('parameters','task',taskType);
-        % save subjects vector in analysis struct
-        analysis.subjects = subjects;
-        % Get filter parameters
-        filtPar = config('filter');
-        % Load trigger Matrix for current task
-        trig = config('triggers','task', taskType);
-        analysis.jobIndex = 0;
-        analysis.batchMode = 0;
-        analysisIn = 0;
-        filtParIn = 0;
-        trigIn = 0;
-        batchMode = 0;
-    end    
-
+    % Get analysis parameters
+    analysis = config('parameters','task',taskType);
+    % save subjects vector in analysis struct
+    analysis.subjects = subjects;
+    % Get filter parameters
+    filtPar = config('filter');
+    % Load trigger Matrix for current task
+    trig = config('triggers','task', taskType);
+    % check input
+    if analysis.parallel && nargin < 3
+        error(':: Parallel Mode is required');
+    elseif nargin > 2
+        analysis.parallel = 1;
+    end
     %% Add Paths
     % get Paths
     paths = config('Path','task',taskType,'analysis',analysis,'filt',filtPar);
-    % add all relevant paths to the current workspace
-    addpath(paths.funcDir, paths.libDir, paths.eeglabDir, paths.stimFuncDir);
-    addpath([paths.eeglabDir 'functions/popfunc/']);
-    addpath([paths.eeglabDir 'functions/guifunc/']);
-    addpath([paths.eeglabDir 'functions/adminfunc/']);
-    addpath([paths.eeglabDir 'functions/sigprocfunc/']);
-    addpath([paths.eeglabDir 'external/biosig-partial/t200_FileAccess/']);
-    addpath([paths.eeglabDir 'external/biosig-partial/t250_ArtifactPreProcessingQualityControl/']);
-    addpath([paths.eeglabDir 'plugins/bva-io1.58/']);
-    addpath([paths.libDir 'firfilt-1.5.3/']);
-    addpath([paths.libDir 'sphspline0.2/']);
-
-    % check availabel raw data and configure raw data paths
-    paths = checkRawData(paths,subjects,taskType);
+    % add local paths
+    addpath(paths.funcDir, paths.local.libDir, paths.local.eeglabDir, paths.local.stimFuncDir);
+    addpath([paths.local.eeglabDir 'functions/popfunc/']);
+    addpath([paths.local.eeglabDir 'functions/guifunc/']);
+    addpath([paths.local.eeglabDir 'functions/adminfunc/']);
+    addpath([paths.local.eeglabDir 'functions/sigprocfunc/']);
+    addpath([paths.local.eeglabDir 'plugins/bva-io1.5.12/']);
+    addpath([paths.local.eeglabDir 'plugins/Biosig2.88/']);
+    addpath([paths.local.eeglabDir 'plugins/Biosig2.88/biosig/doc']);
+    addpath([paths.local.eeglabDir 'plugins/Biosig2.88/biosig/t250_ArtifactPreProcessingQualityControl']);
+    addpath([paths.local.eeglabDir 'plugins/Biosig2.88/biosig/t200_FileAccess']);
+    addpath([paths.local.eeglabDir 'plugins/firfilt1.6/']);
+    addpath([paths.local.libDir 'sphspline0.2/']);
     
     %% run preprocessing routine
     if analysis.preprocess
-        % initialize cell array for subject erps
-        subErp = cell(numel(subjects),1);
-        subErpEqual = cell(numel(subjects),1);
-        subTrialInd = cell(numel(subjects),1);
-        corrTrials = cell(numel(subjects),1);
-        numEvent = cell(numel(subjects),1);
-        trigNum = cell(numel(subjects),1);
-        % open independant matlab labs (local configuration [4 cores])
-       
-        if analysis.parallel
-            % open matlabpool according to specified parallel computing profile)
-            matlabpool(analysis.core)
-        end
-        
-        % over all subjects
-        for iSubj = 1:size(subjects,2)
-
-            %% Get Parameters
-            if batchMode
-                % Get analysis parameters from input arguments [batch mode]
-                analysis = analysisIn;
-                % save subjects vector in analysis struct from input arguments [batch mode]
-                analysis.subjects = subjects;
-                % Get filter parameters from input arguments [batch mode]
-                filtPar = filtParIn;
-                % Load trigger Matrix for current task from input arguments [batch mode]
-                trig = trigIn;
-                analysis.batchMode = 1;
-            else
-                % Get analysis parameters
-                analysis = config('parameters','task',taskType);
-                % save subjects vector in analysis struct
-                analysis.subjects = subjects;
-                % Get filter parameters
-                filtPar = config('filter');
-                % Load trigger Matrix for current task
-                trig = config('triggers','task', taskType);
-                analysis.jobIndex = 0;
-                analysis.batchMode = 0;
-            end    
-            
-            %% Add Paths
-            % get Paths
-            paths = config('Path','task',taskType,'analysis',analysis,'filt',filtPar);
-
-            addpath(paths.funcDir, paths.libDir, paths.eeglabDir, paths.stimFuncDir);
-            addpath([paths.eeglabDir 'functions/popfunc/']);
-            addpath([paths.eeglabDir 'functions/guifunc/']);
-            addpath([paths.eeglabDir 'functions/adminfunc/']);
-            addpath([paths.eeglabDir 'functions/sigprocfunc/']);
-            addpath([paths.eeglabDir 'external/biosig-partial/t200_FileAccess/']);
-            addpath([paths.eeglabDir 'external/biosig-partial/t250_ArtifactPreProcessingQualityControl/']);
-            addpath([paths.libDir 'firfilt-1.5.3/']);
-            addpath([paths.libDir 'sphspline0.2/']);
-
+        % evaluate runmode (parallel or serial)
+        if ~analysis.parallel && nargin < 3
+            %% serial processing on local machine
             % check availabel raw data and configure raw data paths
             paths = checkRawData(paths,subjects,taskType);
-
-            % save subjects vector in analysis struct
-            analysis.subjects = subjects;
-            % prepare matrix for counting of available events for each subjects
-            % (lines represent blocks, colums 1-20 are triggers 101-512)
-            eventCount = zeros(size(trig.triggers,1),analysis.nBlocks);
-            % prepare result folder for subject
-            paths = prepSubDir(paths,subjects,iSubj);
-
-            % get condition order
-            condOrder = preporder(subjects(iSubj),taskType,0);
-            counter = 0;
-            for iFile = 1:analysis.nBlocks
-                counter = counter + 1;
-                % load raw data for current file and stimulation parameters
-                [EEG, block,analysis, paths] = loadRawData(paths, subjects(iSubj),taskType,iFile,analysis,counter);
-                % check parameters (sampling rate, triggers etc)
-                [EEG, eventExcp] = checkFile(EEG,subjects(iSubj),iFile,block,taskType,analysis,trig);
-                % Retriggering and systematically exclude events from analysis
-                EEG = change_trig(EEG,analysis,trig,iFile,condOrder,taskType); 
-                % bipolarize eye channels
-                EEG = bipolarize(EEG,analysis);
-                % adjust electrode positions
-                EEG = chanLoc(EEG,paths);
-                % Run Channel interpolation
-                EEG = interpChan(EEG,analysis,subjects(iSubj),iFile);
-                % filter the block depending on rejection method:
-                switch analysis.rejmode
-                    % No eye correction
-                  case {0,1,3,4}
-                    % filter Data
-                    filtPar.eye = 0; % no eye correction
-                    EEG = fir_filter(EEG,analysis,filtPar);
-                    
-                    % safe block data after segemtation and baseline correction
-                    eventCount = segmentation(EEG,trig,analysis,paths,eventCount, ...
-                                              iFile,subjects(iSubj),condOrder);
-                    % eye correction
-                  case 2
-                    % filter Data
-                    filtPar.eye = 1; % before eye correction
-                    EEG = fir_filter(EEG,analysis,filtPar);
-                    % save EEG block
-                    pop_saveset(EEG,[paths.resFileSubSpec num2str(subjects(iSubj),'%0.2d') ...
-                                     paths.resFileBlockSpec num2str(iFile, '%0.2d') '.set'], ...
-                                paths.resDir);
-                  otherwise
-                    error([':: Invalid option for rejection method: ' num2str(analysis.rejmode)]);
+            % initialize cell array for subject erps
+            subErp = cell(numel(subjects),1);
+            subErpEqual = cell(numel(subjects),1);
+            subTrialInd = cell(numel(subjects),1);
+            corrTrials = cell(numel(subjects),1);
+            numEvent = cell(numel(subjects),1);
+            trigNum = cell(numel(subjects),1);
+            % over all subjects
+            dur.Start = datestr(now,'ddd mmm DD HH:MM:SS YYYY');
+            for iSubj = 1:size(subjects,2)
+                dur.task(iSubj).Start = datestr(now,'ddd mmm DD HH:MM:SS YYYY');
+                subData = preprocess(taskType,subjects(iSubj),analysis,filtPar,trig,paths);
+                % combine subject specific results of preprocessing
+                subErp{iSubj,1} = subData.subErp;
+                subErpEqual{iSubj,1} = subData.subErpEqual;
+                subTrialInd{iSubj,1} = subData.subTrialInd;
+                corrTrials{iSubj,1} = subData.corrTrials;
+                numEvent{iSubj,1} = subData.numEvent;
+                rejEpoch(iSubj,:) = subData.rejEpoch;
+                trialNum{iSubj,1} = subData.trialNum;                 
+                rejLog(iSubj) = subData.rejLog;
+                dur.task(iSubj).End = datestr(now,'ddd mmm DD HH:MM:SS YYYY');
+            end 
+            dur.End = datestr(now,'ddd mmm DD HH:MM:SS YYYY');
+            % retrieve configuration settings
+            analysis = subData.analysis;
+            paths = subData.paths;
+            trig = subData.trig;
+            filtPar = subData.filtPar;
+            % save preprocessed data
+            save_erp(subErp,subErpEqual,subTrialInd,corrTrials,numEvent,rejEpoch,trialNum,subjects,paths,trig,dur,analysis,filtPar,rejLog);
+            job = [];
+            sched = [];
+          else
+            %% parallel processing
+            
+            % Create scheduler %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+            % all jobs defined below, will be scheduled by this cluster configuration
+            sched = findResource('scheduler','configuration',analysis.core);
+            % set resources for scheduler
+            if strcmp(paths.cluster,'remote')
+                set(sched, 'SubmitFcn', cat(1,sched.SubmitFcn,'runtime','0:30:0','memory','6G'));
+            end
+            % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+            
+            switch parallelMode
+              case 'submitJob'
+                % create cell array of input argument for each task
+                inArgs = cell(1,size(subjects,2));
+                for iTask = 1:size(subjects,2)
+                    inArgs{iTask} = {taskType subjects(iTask),analysis,filtPar,trig,paths};
                 end
-            end
+                % get list of file dependencies (in main folder)
+                files = dir([pwd '/*.m']);
+                fd1 = cell(1,size(files,1));
+                for iFile = 1:size(files,1)
+                    fd1{iFile} = [pwd '/' files(iFile).name];
+                end
+                % and in functions folder
+                files = dir([pwd '/func/*.m']);
+                fd2 = cell(1,size(files,1));
+                for iFile = 1:size(files,1)
+                    fd2{iFile} = [pwd '/func/' files(iFile).name];
+                end
+                % combine file dependencies from func and main folder
+                fd = [fd1 fd2];
+                % create job object 
+                job = createJob(sched);
+                % set file dependencies 
+                set(job,'FileDependencies',fd);
+                task = createTask(job, @preprocess, 1 ,inArgs);
+
+                % add paths dependencies
+                pd = {paths.rawDir; paths.resDir; paths.behavDir; ...
+                      paths.eeglabDir; paths.libDir; paths.elecSetup;...
+                      paths.stimFuncDir;
+                      [paths.eeglabDir 'functions/popfunc/'];...
+                      [paths.eeglabDir 'functions/guifunc/'];...
+                      [paths.eeglabDir 'functions/adminfunc/'];...
+                      [paths.eeglabDir 'functions/sigprocfunc/'];...
+                      [paths.eeglabDir 'plugins/bva-io1.5.12/'];...
+                      [paths.eeglabDir 'plugins/plugins/Biosig2.88/'];...
+                      [paths.eeglabDir 'plugins/Biosig2.88/biosig/doc'];...
+                      [paths.eeglabDir 'plugins/Biosig2.88/biosig/t250_ArtifactPreProcessingQualityControl'];...
+                      [paths.eeglabDir 'plugins/Biosig2.88/biosig/t200_FileAccess'];...
+                      [paths.eeglabDir 'plugins/firfilt1.6/'];...
+                      [paths.libDir 'sphspline0.2/']};                
                 
-            switch analysis.rejmode
-                % no eye correction
-              case {0,1,3}
-                % merge files of same trigger for current subject and save
-                merge_data(subjects(iSubj),paths,trig,eventCount,condOrder);
-                % eye correction
-              case 2
-                % merge all files for current subject, perform eye correction, apply post
-                % filter and save
-                merge_all(subjects(iSubj),paths,filtPar,analysis);
-                % safe block data after trigger resegemtation and baseline correction
-                segmentation(EEG,trig,analysis,paths,eventCount, ...
-                             iFile,subjects(iSubj),condOrder);
+                set(job,'PathDependencies',pd);
+
+                % submit the job to the scheduler
+                submit(job);
+                
+              case 'getJob'
+                job = get(sched,'Jobs');
+                % specify Job ID
+                if size(job,1) > 1
+                    job
+                    disp(':: Specify job ID')
+                    id = 0;
+                    while ~ismember(id,1:size(job,1))
+                        id = input('>> ');
+                        if ~ismember(id,1:size(job,1))
+                           disp([':: ' num2str(id) ' is not a valid job ID']);  
+                        end
+                    end
+                    job = job(id);
+                elseif size(job,1) < 1
+                    error(':: There are no jobs for the current scheduler');
+                end
+                % get Tasks
+                task = get(job,'Tasks');
+                % check task state
+                allFin = [ ];
+                for iTask = 1:size(task,1)
+                    if strcmp(task(iTask).State,'finished')
+                        allFin = [allFin 1];
+                    else
+                        allFin = [allFin 0];
+                    end
+                end
+                % gather data
+                if all(allFin) && ~isempty(allFin)
+                    disp(':: All tasks are finished');
+                    task
+                    
+                    % initialize cell array for subject erps
+                    subErp = cell(numel(subjects),1);
+                    subErpEqual = cell(numel(subjects),1);
+                    subTrialInd = cell(numel(subjects),1);
+                    corrTrials = cell(numel(subjects),1);
+                    numEvent = cell(numel(subjects),1);
+                    trigNum = cell(numel(subjects),1);
+                    
+                    for iTask = 1:size(task,1)
+                        subData = get(task(iTask),'OutPutArguments');
+                        subData = subData{1};
+                        % combine subject specific results of preprocessing
+                        subErp{iTask,1} = subData.subErp;
+                        subErpEqual{iTask,1} = subData.subErpEqual;
+                        subTrialInd{iTask,1} = subData.subTrialInd;
+                        corrTrials{iTask,1} = subData.corrTrials;
+                        numEvent{iTask,1} = subData.numEvent;
+                        rejEpoch(iTask,:) = subData.rejEpoch;
+                        trialNum{iTask,1} = subData.trialNum;                 
+                        rejLog(iTask) = subData.rejLog;
+                    end
+                    % retrieve analysis paraemters from processed data set
+                    analysis = subData.analysis;
+                    % retrieve path parameters from processed data set
+                    paths = subData.paths;
+                    % set raw and result Dir
+                    paths.rawDirAll = paths.local.rawDir;
+                    paths.resDirAll = paths.local.resDir;
+                    % retrieve trigger parameters from processed data set
+                    trig = subData.trig;
+                    % retrieve filter parameters from processed data set
+                    filtPar = subData.filtPar;
+                    dur.Start = get(job,'StartTime');
+                    dur.End = get(job,'FinishTime');
+                    save_erp(subErp,subErpEqual,subTrialInd,corrTrials,numEvent,rejEpoch,trialNum,subjects,paths,trig,dur,analysis,filtPar,rejLog,job);
+                else
+                    disp(':: There are unfinished tasks for the current job');
+                    task
+                end
+              case 'plot'
+                sched = [];
+                job = [];
+                % set raw and result Dir
+                paths.rawDirAll = paths.local.rawDir;
+                paths.resDirAll = paths.local.resDir;
+              otherwise
+                error([':: There is no option called ' parallelMode '.']);
             end
-            % artifact rejection and averaging
-            [subErp{iSubj,1},...
-             subErpEqual{iSubj,1},...
-             subTrialInd{iSubj,1},...
-             corrTrials{iSubj,1},...
-             numEvent{iSubj,1},...
-             rejEpoch(iSubj,:),...
-             trialNum{iSubj,1}] = eeg_rejection(subjects(iSubj),paths,trig,analysis);
-        end % parfor all subjects
-        clear EEG
-
-        if analysis.parallel
-            % close the pool
-            matlabpool close; 
         end
+    end % preprocessing
         
-        % combine subject data, calculate amount of usable data and save
-        % erpAll
-        tEnd = toc(tStart);
-
-        save_erp(subErp,subErpEqual,subTrialInd,corrTrials,numEvent,rejEpoch,trialNum,subjects,paths,trig,tStart,tEnd,analysis,filtPar);
-
-        disp(' ');
-        disp([':: Duration of Analysis: ' num2str(tEnd/60) ' minutes.']);
-        % clear current trigger configuration (will be loaded from erp file for
-        % further steps)
-        clear trig;
-    end % preprocess
-
-    if ~batchMode
+    if (~analysis.parallel && nargin < 3) || strcmpi(parallelMode,'plot')
         %% Calculation of difference
         % calculate difference waves
         [erpAll, restoredConf, chanlocs, trig] = calc_diff(subjects,paths,analysis,taskType);

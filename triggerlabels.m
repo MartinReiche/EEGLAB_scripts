@@ -1,5 +1,5 @@
 % Names of triggers and trigger configurations
-function trig = triggerlabels(trig,taskType)
+function trig = triggerlabels(method,trig,taskType)
 %% TRIGGER CONFIGURATIONS %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Original Triggers
 % 1 - first tone of pair (no preceding pair)
@@ -26,17 +26,20 @@ trig.rejThresh.note = 5;
 % enable to pause the analysis if trig.rejThresh.note is exceeded
 trig.rejThresh.pause = 0;
 % start trigger of each raw file
-trig.startTrig = 'S254';
+trig.startTrig = '254';
 % end trigger of each raw file
-trig.endTrig = 'S255';
+trig.endTrig = '255';
 % response trigger
-trig.respTrig = ' ';
+trig.respTrig = '17';
 % miss trigger
 trig.missTrig = '99';
+% trigger that should be deleted directly after raw data was loaded (due to
+% technical issues
+trig.delete = {'boundary'};
 % trigger codes of events which have to be excluded by definition
 % (hypothesis driven) / are already marked as excluded by the stimulation
 % scripts 
-trig.exclBefore = [ ];
+trig.exclBefore = {'21' '22' '23' '24' '25' '26'};
 
 %% RETRIGGERING
 
@@ -51,61 +54,52 @@ trig.exclBefore = [ ];
 % 5th Column: Color index (same color per type [within condition comparison])
 % 6th Column: Index types belonging together (for choice of same numbers of trials)
 % 7th Column: Linestyle ({} = default = '-')
-
-switch taskType
-  case 1
-    % PASSIVE TASK (1)
-    trig.triggers = {
-    % condition 1 (1st & 2nd tone of "pair")
-        'S 11',        {'first-tone-1'},          [1]  , [1], [1], [1], {};
-        'S 12',        {'second-tone-1'},         [1]  , [2], [1], [1], {};
-    % condition 1 (omission of 1st & 2nd tone of "pair")
-        'S 13',        {'first-omission-1'},      [1]  , [3], [1], [2], {};
-        'S 14',        {'second-omission-1'},     [1]  , [4], [1], [2], {};
-    % condition 2 (1st & 2nd tone of "pair")
-        'S 21',        {'first-tone-2'},          [1]  , [1], [2], [1], {};
-        'S 22',        {'second-tone-2'},         [1]  , [2], [2], [1], {};
-    % condition 2 (omission of 1st & 2nd tone of "pair")
-        'S 23',        {'first-omission-2'},      [1]  , [3], [2], [2], {};
-        'S 24',        {'second-omission-2'},     [1]  , [4], [2], [2], {};
-    % condition 3 (1st & 2nd tone of "pair")
-        'S 31',        {'first-tone-3'},          [1]  , [1], [3], [1], {};
-        'S 32',        {'second-tone-3'},         [1]  , [2], [3], [1], {};
-    % condition 3 (omission of 1st & 2nd tone of "pair")
-        'S 33',        {'first-omission-3'},      [1]  , [3], [3], [2], {};
-        'S 34',        {'second-omission-3'},     [1]  , [4], [3], [2], {};
-    % condition 4 (1st & 2nd tone of "pair")
-        'S 41',        {'first-tone-4'},          [1]  , [1], [4], [1], {};
-        'S 42',        {'second-tone-4'},         [1]  , [2], [4], [1], {};
-    % condition 4 (omission of 1st & 2nd tone of "pair")
-        'S 43',        {'first-omission-4'},      [1]  , [3], [4], [2], {};
-        'S 44',        {'second-omission-4'},     [1]  , [4], [4], [2], {};
-    % condition 5 (1st & 2nd tone of "pair")
-        'S 51',        {'first-tone-5'},          [1]  , [1], [5], [1], {};
-        'S 52',        {'second-tone-5'},         [1]  , [2], [5], [1], {};
-    % condition 5 (omission of 1st & 2nd tone of "pair")
-        'S 53',        {'first-omission-5'},      [1]  , [3], [5], [2], {};
-        'S 54',        {'second-omission-5'},     [1]  , [4], [5], [2], {};
-                    };
-  case 2
-        trig.triggers = {
-    % ACTIVE TASK (2)
-    % THERE IS NO ACTIVE TASK FOR THIS EXPERIMENT
+switch lower(method)
+  case 'triggers'
+    switch taskType
+      case 1
+        trig.triggers = {        
+        % EXAMPLE:
+        % Condition 1
+        % '120',         {'1stCondTrig1'},           [1 2], [1], [1], [1],{};  
+        % Condition 2
+        % '210',         {'2ndCondTrig1'},           [1 2], [2], [1], [1],{};
+        % '220',         {'2ndCondTrig2'},           [1 2], [2], [2], [1],{};
+        % Condition 3
+        % '310',         {'3rdCondTrig1'},           [1 2], [3], [1], [1],{};
+        % '320',         {'3rdCondTrig2'},           [1 2], [3], [2], [1],{};
+        % Condition 4
+        % '410',         {'4thCondTrig1'},           [1 2], [4], [1], [1],{};
+        % '420',         {'4thCondTrig2'},           [1 2], [4], [2], [1],{};
+        % Condition 5
+        % {'510' '520'}, {'5thCondBothTrig'},        [1 2], [5], [1], [1],{};
                         };
-        end
+      case 2
+        % ACTIVE TASK (2)
+        trig.triggers = {        
+        % ... same as above for another task/set of data (preferably
+        % active data with response triggers in the EEG)
+                        };
+    end
 
-% Define difference waves to compute
-% 1st Column minus 2nd column
-% 3rd Column is name of difference wave
-% 4th Column is color index per condition
-% 5th Column is color index per type
-% 6th Column is line style (default '-')
-
-trig.diffWaves = {
-    'first-tone-1', 'second-tone-1', 'tone-diff-1', [5], [1], {};
-    'first-tone-2', 'second-tone-2', 'tone-diff-2', [5], [2], {};
-    'first-tone-3', 'second-tone-3', 'tone-diff-3', [5], [3], {};
-    'first-tone-4', 'second-tone-4', 'tone-diff-4', [5], [4], {};
-    'first-tone-5', 'second-tone-5', 'tone-diff-5', [5], [5], {};
-                 };
-
+    % Define difference waves to compute
+    % 1st Column minus 2nd column
+    % 3rd Column is name of difference wave
+    % 4th Column is color index per condition
+    % 5th Column is color index per type
+    % 6th Column is line style (default '-')
+    trig.diffWaves = {
+    % EXAMPLE:
+    % '2ndCondTrig1', '2ndCondTrig2', '2ndCondTrig1-minus-2ndCondTrig2', [6], [2], {};
+    % '3ndCondTrig1', '3ndCondTrig2', '3ndCondTrig1-minus-3ndCondTrig2', [6], [3], {};
+                     };
+  case 'retrig'
+    %% retrigger events (first of pair/ second of pair)
+    trig = {
+    %
+    %     {'Original trigger'}, {'new trigger'}};  
+    %
+    % example:
+    %     {'41'}, num2str((100 * condOrder(iFile)) + 41);  
+             };    
+end

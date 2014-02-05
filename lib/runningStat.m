@@ -34,33 +34,39 @@ function sigInt = runningStat(erpAll,spData)
 %% determine parameters
 % perform the statistics only when the statistics time range is within the bounds of the epoch
 if (spData.plotPar.runStatWin(1) < spData.analysis.erpWin(1)) || (spData.plotPar.runStatWin(2) > spData.analysis.erpWin(2))
-    warning(':: Statistics time range exceeds bounds of epoch. Skipping Statistics');
-else
-    % get time resolution
-    timeRes = 1000/spData.analysis.sampRate;
-    % get relevant range for testing (in ms from beginning
-    statRangeMS = [abs(spData.analysis.erpWin(1) - spData.plotPar.runStatWin(1))...
-                   abs(spData.analysis.erpWin(1) - spData.plotPar.runStatWin(2))];
-    % convert ms timerange to datapoints
-    statRange = [ceil(statRangeMS(1)/timeRes) ceil(statRangeMS(2)/timeRes)];
-    % convert zeros to one
-    statRange(statRange == 0) = 1;
-    % get relevant data
-    statData = erpAll(:,spData.currInd,statRange(1):statRange(2),spData.channelIndex);
+    disp([':: Statistics time range exceeds bounds of epoch. Testing whole epoch range']);
+    spData.plotPar.runStatWin(1) = spData.analysis.erpWin(1);
+    spData.plotPar.runStatWin(2) = spData.analysis.erpWin(2);
+elseif (spData.plotPar.runStatWin(1) > spData.analysis.erpWin(1)) || (spData.plotPar.runStatWin(2) < spData.analysis.erpWin(2))
+    disp(' ');
+    warning(':: NOT TESTING WHOLE EPOCH RANGE!');
+    disp(' ');
+end
+
+% get time resolution
+timeRes = 1000/spData.analysis.sampRate;
+% get relevant range for testing (in ms from beginning
+statRangeMS = [abs(spData.analysis.erpWin(1) - spData.plotPar.runStatWin(1))...
+               abs(spData.analysis.erpWin(1) - spData.plotPar.runStatWin(2))];
+% convert ms timerange to datapoints
+statRange = [ceil(statRangeMS(1)/timeRes) floor(statRangeMS(2)/timeRes)];
+% convert zeros to one
+statRange(statRange == 0) = 1;
+% get relevant data
+statData = erpAll(:,spData.currInd,statRange(1):statRange(2),spData.channelIndex);
+
+% initialize array to store p values
+pVals = zeros(1,size(statData,3));    
+% Go through all the timepoints
+for iPoint = 1:size(statData,3)
+    % perfrom one-way RMANOVA with the factor CONDITION (available waves per plot) 
     
-    % initialize array to store p values
-    pVals = zeros(1,size(statData,3));    
-    % Go through all the timepoints
-    for iPoint = 1:size(statData,3)
-        % perfrom one-way RMANOVA with the factor CONDITION (available waves per plot) 
-        
-        pVals(iPoint) = OneWayrmAoV(statData(:,:,iPoint));
-        
-    end    
-    pID = fdr(pVals,spData.plotPar.alpha);
-    if ~isempty(pID)
-        sigInt = find(pVals < pID);
-    else
-       sigInt = [];
-    end
+    pVals(iPoint) = OneWayrmAoV(statData(:,:,iPoint));
+    
+end    
+pID = fdr(pVals,spData.plotPar.alpha);
+if ~isempty(pID)
+    sigInt = find(pVals < pID);
+else
+    sigInt = [];
 end

@@ -8,9 +8,6 @@ function [EEG, eventExcp] = checkFile(EEG,nSubj,iFile,stimPars,taskType,analysis
 %% Parameters
 checkFactor = 1000 / analysis.sampRate;
 
-
-
-
 %% check sampling rate
 if EEG.srate ~= analysis.sampRate
     error([...
@@ -45,17 +42,18 @@ end
 % get trigger timing
 triggerTime = stimPars.pars(:,6);
 
-% remove boundary events
-iTrig = 1;
-while iTrig <= size(EEG.event,2)
-    if strcmpi(EEG.event(iTrig).type,'boundary')
-       disp(':: Removing boundary event');
-       EEG.event(iTrig) = [];
-    else
-        iTrig = iTrig + 1;
+% remove unintended events
+for iDel = 1:size(trig.delete,2)
+    iTrig = 1;
+    while iTrig <= size(EEG.event,2)
+        if strcmpi(EEG.event(iTrig).type,trig.delete{iDel})
+            disp([':: Removing ' trig.delete{iDel} ' event']);
+            EEG.event(iTrig) = [];
+        else
+            iTrig = iTrig + 1;
+        end
     end
 end
-
 % get EEG events and latency
 eegEvent = cell(size(EEG.event,2),1);
 % for event latency storage
@@ -176,6 +174,7 @@ if (size(trigger,1) ~= size(eegEvent,1))
     end
     %    input(':: Press Ret to proceed, C-c to abort.');
 end
+
 % if trigger numbers are equal between intended and detected
 if all(strcmp(trigger,eegEvent))
     % everything as intended
@@ -222,10 +221,9 @@ eegLat = [eegLat abs(eegLat{:,3} - eegLat{:,2})];
 % check if trigger latency exceeds predefined threshold
 rejCounter = 0;
 
-for iTrial = 1:size(eegLat,1) 
-    if ((eegLat{iTrial,4} > trig.rejThresh.stim) & (eegLat{iTrial,1} ~= trig.respTrig)) | ((eegLat{iTrial,4} > trig.rejThresh.resp) & (eegLat{iTrial,1} == trig.respTrig)) 
-        disp(':: Trigger latency exceeded accepted value, marked for rejection');
-        disp([eegLat{iTrial,4} trig.rejThresh.stim]);
+for iTrial = 1:size(eegLat{1},1) 
+    if ((eegLat{4}(iTrial) > trig.rejThresh.stim) & ~strcmp(eegLat{1}{iTrial},trig.respTrig)) | ((eegLat{4}(iTrial) > trig.rejThresh.stim) & strcmp(eegLat{1}{iTrial},trig.respTrig))
+        disp([':: Trigger latency exceeded accepted value, marked for rejection by ' num2str(eegLat{4}(iTrial)) ' ms']);
         EEG.event(iTrial).type = trig.missTrig;
         rejCounter = rejCounter + 1;
     end
@@ -237,7 +235,7 @@ if sum(eventExcp.rej) > trig.rejThresh.note
     disp(' ');
     disp([':: More than ' num2str(trig.rejThresh.note) ' Events have been rejected for Subject '...
           num2str(nSubj) ' Block ' num2str(iFile)]);
-    if analysis.rejTresh.pause
+    if trig.rejThresh.pause
         input(':: Press Ret to continue, C-c to abort.');
     end
 end

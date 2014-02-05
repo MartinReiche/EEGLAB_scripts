@@ -16,7 +16,7 @@
 % You should have received a copy of the GNU General Public License
 % along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-function maxVal = getMax(method,erpAll,analysis,plotPar,plotConds,labels,iChan,channels2plot)
+function maxVal = getMax(method,erpAll,analysis,plotPar,plotConds,labels,chanlocs,statChan,channels2plot)
 
 % evaluate method
 switch lower(method)
@@ -40,14 +40,16 @@ switch lower(method)
 
     % get maxima for each curve on each channel
     for iChan = 1:size(channels2plot,2)
-        for iWave = 1:numel(currInd)
-            erpMax(iChan,iWave) = max(squeeze(mean(erpAll(:,currInd(iWave),:,channels2plot(iChan)))));
-            erpMin(iChan,iWave) = min(squeeze(mean(erpAll(:,currInd(iWave),:,channels2plot(iChan)))));
-            for iWin = 1:size(plotPar.compWin,1)
-                statWin = [round(((plotPar.compWin(iWin,1)+abs(plotPar.xScale(1)))*analysis.sampRate)/1000) ...
-                           round(((plotPar.compWin(iWin,2)+abs(plotPar.xScale(1)))*analysis.sampRate)/1000)];
-                erpMean(iWin,iWave,iChan) = mean(mean(squeeze(erpAll(:,currInd(iWave),statWin,channels2plot(iChan))),2));
-                erpErr(iWin,iWave,iChan) = std(mean(squeeze(erpAll(:,currInd(iWave),statWin,channels2plot(iChan))),2))/sqrt(size(erpAll,1));
+        if ~strcmpi(chanlocs(channels2plot(iChan)).labels,'veog') && ~strcmpi(chanlocs(channels2plot(iChan)).labels,'heog')
+            for iWave = 1:numel(currInd)
+                erpMax(iChan,iWave) = max(squeeze(mean(erpAll(:,currInd(iWave),:,channels2plot(iChan)))));
+                erpMin(iChan,iWave) = min(squeeze(mean(erpAll(:,currInd(iWave),:,channels2plot(iChan)))));
+                for iWin = 1:size(plotPar.compWin,1)
+                    statWin = [round(((plotPar.compWin(iWin,1)+abs(plotPar.xScale(1)))*analysis.sampRate)/1000) ...
+                               round(((plotPar.compWin(iWin,2)+abs(plotPar.xScale(1)))*analysis.sampRate)/1000)];
+                    erpMean(iWin,iWave,iChan) = mean(mean(squeeze(erpAll(:,currInd(iWave),statWin,channels2plot(iChan))),2));
+                    erpErr(iWin,iWave,iChan) = std(mean(squeeze(erpAll(:,currInd(iWave),statWin,channels2plot(iChan))),2))/sqrt(size(erpAll,1));
+                end
             end
         end
     end
@@ -85,26 +87,31 @@ switch lower(method)
     
     % get data
     for iWave = 1:numel(currInd)
-        erpMax(iWave) = ceil(max(squeeze(mean(erpAll(:,currInd(iWave),:,channels2plot(iChan)),1))));
-        erpMin(iWave) = floor(min(squeeze(mean(erpAll(:,currInd(iWave),:,channels2plot(iChan)),1))));
+        erpMax(iWave) = ceil(max(squeeze(mean(erpAll(:,currInd(iWave),:,channels2plot(statChan)),1))));
+        erpMin(iWave) = floor(min(squeeze(mean(erpAll(:,currInd(iWave),:,channels2plot(statChan)),1))));
         for iWin = 1:size(plotPar.compWin,1)
             statWin = [round(((plotPar.compWin(iWin,1)+abs(plotPar.xScale(1)))*analysis.sampRate)/1000) ...
                        round(((plotPar.compWin(iWin,2)+abs(plotPar.xScale(1)))*analysis.sampRate)/1000)];
-            erpMean(iWin,iWave) = mean(mean(squeeze(erpAll(:,currInd(iWave),statWin,channels2plot(iChan))),2));
-            erpErr(iWin,iWave) = std(mean(squeeze(erpAll(:,currInd(iWave),statWin,channels2plot(iChan))),2))/sqrt(size(erpAll,1));
+            erpMean(iWin,iWave) = mean(mean(squeeze(erpAll(:,currInd(iWave),statWin,channels2plot(statChan))),2));
+            erpErr(iWin,iWave) = std(mean(squeeze(erpAll(:,currInd(iWave),statWin,channels2plot(statChan))),2))/sqrt(size(erpAll,1));
         end
     end 
 
-    % get maximal and minimal values (amplitude mean in time window plus SEM)
-    meanMaxValues = [];
-    for iWave = 1:numel(erpMean)
-        meanMaxValues = [meanMaxValues erpMean(iWave) - erpErr(iWave)];
-        meanMaxValues = [meanMaxValues erpMean(iWave) + erpErr(iWave)];
+    if ~isempty(plotPar.compWin)
+        % get maximal and minimal values (amplitude mean in time window plus SEM)
+        meanMaxValues = [];
+        for iWave = 1:numel(erpMean)
+            meanMaxValues = [meanMaxValues erpMean(iWave) - erpErr(iWave)];
+            meanMaxValues = [meanMaxValues erpMean(iWave) + erpErr(iWave)];
+        end
+        % get minimal and maximal value for current figure
+        maxVal.meanMin = min(meanMaxValues);
+        maxVal.meanMax = max(meanMaxValues);
+    else
+        maxVal.meanMin = [];
+        maxVal.meanMax = [];
     end
-
-    % get minimal and maximal value for current figure
-    maxVal.meanMin = min(meanMaxValues);
-    maxVal.meanMax = max(meanMaxValues);
+    
     maxVal.erpMin = min(erpMin);
     maxVal.erpMax = max(erpMax);
   

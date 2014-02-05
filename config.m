@@ -33,18 +33,18 @@ function varargout = config(Method,varargin)
     analysis.preprocess = 1;
     % perform parallel preprocessing 
     analysis.parallel = 0;
-    % Cluster configuration 'local...' ('.singleCore' '.dualCore' ...)
-    % ex 'local.tripleCore'
-    analysis.core = 'local.dualCore';
-    % filter the data
+    % Cluster configuration (enter name of zour cluster configuration here
+    % [as under Parallel > Select Configuration])
+    analysis.core = 'Cluster_configuration_name';
+    % filter the data (logic switch for all filter routines)
     analysis.filterFlag = 1;
     % raw data format (options: 'biosemi', 'brainvision')
     analysis.rawFormat = 'brainvision';
-    % change triggers according to func/retrigConf.m
+    % change triggers according triggerlabels('retrig',trig,taskType)
     analysis.changeTrig = 0;
     % Eye channels for bipolarization, specify in following order
     % {'LO1', 'LO2', 'SO1', 'IO1'}
-    analysis.eyeChan = {'E23', 'E17', 'E84', 'E29'};
+    analysis.eyeChan = {'LO1', 'LO2', 'SO1', 'IO1'};
     % Rejection mode (0: no rejection, 1 delta rejection, 2 delta + eye
     % correction, 3 reject events specified in file, 4 sorted averaging
     % [not yet implemented])
@@ -52,17 +52,17 @@ function varargout = config(Method,varargin)
     % perform baseline correction (this option is only available for
     % rejection modes other than sorted averaging, with sorted averaging
     % baseline correction will always be performed
-    analysis.rmBase = 0;
+    analysis.rmBase = 1;
     % enable/disable rereferencing
-    analysis.reref = 0;
-    % new reference channel (several electrodes are given here, than the
+    analysis.reref = 1;
+    % new reference channel (if several electrodes are given here, than the
     % new reference will be the average of the given electrodes)
-    analysis.rerefChan = {' ' ' '};
+    analysis.rerefChan = {'M1' 'M2'};
     % erp window
-    analysis.erpWin = [-300 0];
+    analysis.erpWin = [-100 200];
     % baseline window 
     analysis.baseWin = [-100 0];
-    % Number of Blocks
+    % Number of Blocks (number of raw files per subject)
     analysis.nBlocks = 15;
     % Indices of Events to exclude 
     analysis.eventExcl = [1 2];
@@ -70,31 +70,36 @@ function varargout = config(Method,varargin)
     analysis.exclTrig = '98';
     % Time window for correct resonse after omission (in ms)
     analysis.respWin = [50 1050];
-    % Original response Trigger
+    % Original response Trigger (for exclusion of trigger around them in
+    % predefined range [analysis.respEx])
     analysis.respTrig = 'S 17';
+    % deviant / omission triggers (for exclusion of trigger around them in
+    % predefined range [analysis.omEx])
+    analysis.omissionRange = {'S 13' 'S 14' 'S 23' 'S 24' 'S 33' 'S 34' 'S 43'...
+                        'S 44'};
     % Sampling Rate of raw files (in Hz)
     analysis.sampRate = 500;
     % Range of events to exclude around response (in ms)
     analysis.respEx = [-310 410];   
     % Range of events to exclude around omission (in ms)
-    analysis.omEx = [0 610]; % OLD [-160 610];   
+    analysis.omEx = [0 610]; 
     % use same amount of trials for standards and deviants
     analysis.equalErp = 0;
     % plot ERPs
-    analysis.plotERPflag = 0;
+    analysis.plotERPflag = 1;
     % Plot with Stats
     analysis.statsFlag = 1;
     % Plot Topographies
     analysis.topoFlag = 0; 
     % Electrode Name for Reference
     analysis.refChan = 'Nose';
-    % Electrode Name of EXG Channel
+    % Electrode Name of EXG Channel (will be excluded)
     analysis.exgChan = [];
-    % Delta Criterion
+    % Delta Criterion (in microVolt)
     analysis.sortthresh = 100;
     % maximal proportion of events rejected on one electrode to allow before
     % printing Electrode in rejFile
-    analysis.chanMaxRej = 0.2;
+    analysis.chanMaxRej = 0.1;
     % Reject Epochs without activity
     analysis.rejFlatepochs = 1;
     % minimum voltage change per trial
@@ -103,7 +108,7 @@ function varargout = config(Method,varargin)
     analysis.clearFolders = 1;
     % restore erpWin from saved config parameters of erp file
     analysis.savedErpWin = 1;
-    % Rejection method
+    % Rejection method labels
     analysis.rejLabel = {'no rejection';'delta rejection';...
                         'delta rejection and eye correction';...
                         'rejection based on predefined indices';...
@@ -113,23 +118,10 @@ function varargout = config(Method,varargin)
     %% CHANNEL INTERPOLATION %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     % Subject, channel name, block
     % PASSIVE TASK
-    chanInterp1 = {
-        4, 'E09', [1:15];
-        4, 'E16', [1:15];
-        % 3, 62, [501 503 511];
-        % 4, 45, [301 303];      
-        % 6, 'P4', 16;
-        % 9, 'CPz', [1:18];        
-        % 9, 'P4', [13:14];
-        % 9, 'Oz', [13:14];
-        % 9, 29, [102 112 401 402 403 411 412];
-        % 12, 'P2', [17:18];
-                  };
+    chanInterp1 = channelInterp(1);
+
     % ACTIVE TASK
-    % chanInterp2 = {
-    %     1, 'F8', [1:18];
-    %     3, 30, [311 312 321 412];
-    %               };
+    chanInterp2 = channelInterp(2);
 
     % channels to exclude from analysis
     analysis.excludeElecs = {
@@ -157,31 +149,37 @@ function varargout = config(Method,varargin)
            
     %% PATH CONFIGURATIONS %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     % Path to raw eeg data
-    paths.rawDir = '/home/martin/documents/valax/raw_eeg/';
+    paths.local.rawDir = '/local/path/to/your/raw/files/';
+    paths.remote.rawDir = '/path/to/raw/files/on/cluster/';
     % Path to results dir
-    paths.resDir = '/home/martin/documents/valax/results/';
-    % task folder names
+    paths.local.resDir = '/local/path/to/save/result/files/';
+    paths.remote.resDir = '/path/cluster/to/save/result/files';
+    % task folder names (gets appenden to arw file destination path)
     paths.taskLabel = {'passive/' 'active/'};
     % Path to behavioral results
-    paths.behavDir = '/home/martin/Dropbox/PhD/valax/stim/results/';
-    % Path to stim functions
+    paths.local.behavDir = '/local/path/to/stimulation/results/';
+    paths.remote.behavDir = '/path/to/stimulation/results/on/cluster/';
+    % Path to topographie figures 
     paths.topoDir = 'topographies/';
-    paths.stimFuncDir = '/home/martin/Dropbox/PhD/valax/stim/func/';
-    % Path to function dir and lib dir
-    paths.funcDir = [pwd '/func/'];
+    % Path to stim functions
+    paths.local.stimFuncDir = '/local/path/to/stimultion/functions/';
+    paths.remote.stimFuncDir = '/path/to/stimulation/functions/on/cluster/';
+    % Path to function dir and lib dir (contents get uploaded when analysis is
+    % carried out on cluster)
+    paths.funcDir = '/local/path/to/eeg/functions/';
     % Path to Analysis lib Dir
-    paths.libDir = [pwd '/lib/'];
+    paths.local.libDir = '/local/path/to/eeg/libraries/';
+    paths.remote.libDir = '/path/to/eeg/libraries/on/cluster/';
     % EEGLAB Dir
-    paths.eeglabDir = '/home/martin/build/matlab11b/toolbox/eeglab12_0_2_5b/';
-    % path to electrode setup file
-    paths.elecSetup = [paths.libDir 'elec_96ch.elp'];
+    paths.local.eeglabDir = '/local/path/to/eeglab/';
+    paths.remote.eeglabDir = '/path/to/eeglab/on/cluster/';
     % result file extension
     paths.resFileExt = '.set';
     % result subject folder prefix (names of result data subject folders)
     paths.resSubFolderPrefix = 'vp';
     % result file subject specifier
     paths.resFileSubSpec = 'Subj';
-    % result file block specifier
+    % result file block specifiern
     paths.resFileBlockSpec = 'block';
     % result file trigger specifier
     paths.resFileTrigSpec = 'tr';
@@ -197,6 +195,7 @@ function varargout = config(Method,varargin)
     paths.behavFileExt = '.mat';
     % concatenate file (1st: sub, 2nd: tasktype, 3rd: file number, sampling
     % point of border, raw file loading sequence)
+    % EXAMPLE:
     % paths.partFile = {17, 2, 11, [1 93764; 93800 189276], [1:11 11 12:17]};
     paths.partFile = {[],[],[],[],[]};
 
@@ -284,7 +283,7 @@ function varargout = config(Method,varargin)
     % Components with stats
     plotPar.comps = {'Win1'};
     % Time range of components
-    plotPar.compWin = [-30 0];
+    plotPar.compWin = [-20 0];
     % draw the baseline interval 
     plotPar.drawBaseLine = 1;
     % baseline window
@@ -298,6 +297,7 @@ function varargout = config(Method,varargin)
     % define alpha (q) level for fdr of running anova 
     plotPar.alpha = 0.5;
     % define time window for running statistics
+    % plotPar.runStatWin = analysis.erpWin;
     plotPar.runStatWin = analysis.erpWin;
     % horizontal axis coefficient
     plotPar.xCoef = 100;
@@ -310,18 +310,18 @@ function varargout = config(Method,varargin)
     % Channels to plot without stats
     plotPar.plotChannels = {'HEOG';
                     'VEOG';
-                    'F3';
-                    'Fz';
-                    'F4';
-                    'FC1';
-                    'FCz';
-                    'FC2';
-                    'C3';
-                    'Cz';
-                    'C4';
-                    'M1';
-                    'Pz';
-                    'M2'};
+                    'E16';
+                    'E08';
+                    'E09';
+                    'E07';
+                    'E02';
+                    'E03';
+                    'E41';
+                    'E01';
+                    'E38';
+                    'E22';
+                    'E05';
+                    'E18'};
     % automatic plotting dimensions, if this is 0 the
     % dimensionsspecification below will be used
     plotPar.autoDim = 0;
@@ -350,8 +350,7 @@ function varargout = config(Method,varargin)
     % plotConds is plotted at a specified set of electrodes, the last
     % column in each cell specifies in which task the curves of the current
     % cell occur
-    plotConds{1} = { 'Tone-RepEx-2','Tone-RepEx-3', 'Diff', [1 2]};
-    plotConds{2} = { 'Tone-RepEx-4', [1]};
+    plotConds{1} = {'first-tone-1','second-tone-1','first-omission-1','second-omission-1',[1 2]};
 
     % Color Setting
     % 1 = same color per condition [across condition comparison]
@@ -370,10 +369,10 @@ function varargout = config(Method,varargin)
     % plot. Lines of the cell array represent separate plots in one figure
     % and columns represesent separate figures
     
-    plotPar.plotCondsStat{1,1} = {'first-tone-1','first-tone-2','first-tone-3','first-tone-4','first-tone-5',[1 2]};
-    plotPar.plotCondsStat{2,1} = {'second-tone-1','second-tone-2','second-tone-3','second-tone-4','second-tone-5',[1 2]};
-    plotPar.plotCondsStat{3,1} = {'tone-diff-1','tone-diff-2','tone-diff-3','tone-diff-4','tone-diff-5',[1 2]};
-    
+    plotPar.plotCondsStat{1,1} = {'first-tone-5','first-tone-4','first-tone-3','first-tone-2','first-tone-1',[1 2]};
+    plotPar.plotCondsStat{2,1} = {'second-tone-5','second-tone-4','second-tone-3','second-tone-2','second-tone-1',[1 2]};
+    plotPar.plotCondsStat{3,1} = {'tone-diff-5','tone-diff-4','tone-diff-3','tone-diff-2','tone-diff-1',[1 2]};
+
     % Color Setting
     % 1 = same color per type [within condition comparison]
     % 2 = same color per condition [across condition comparison]
@@ -421,11 +420,38 @@ switch lower(Method)
             filtPar = varargin{iArg + 1};
             filtFlag = 1;
           otherwise
-            error([':: Invalid Option ' varargin{iArg} ' for input Metho ' Method]);
+            error([':: Invalid Option ' varargin{iArg} ' for input Method ' Method]);
         end
     end
     if ~taskFlag | ~analysisFlag
        error([':: ''task'', ''filt'' and ''analysis'' is required for input Method ''' Method '''']) 
+    end
+
+    % determine paths according to cluster configuration (local or remote)
+    if ismember(analysis.core,{'local.singleCore','local.dualCore', ...
+                            'local.tripleCore','local.quadCore'}) || ~analysis.parallel
+        paths.rawDir = paths.local.rawDir;
+        paths.resDir = paths.local.resDir;
+        paths.behavDir = paths.local.behavDir;
+        paths.eeglabDir = paths.local.eeglabDir;
+        paths.libDir = paths.local.libDir;
+        paths.stimFuncDir = paths.local.stimFuncDir;
+        % path to electrode setup file
+        paths.elecSetup = [paths.libDir 'elec_96ch.elp'];
+        paths.cluster = 'local';
+    elseif ismember(analysis.core,{'HERO'})
+        paths.rawDir = paths.remote.rawDir;
+        paths.resDir = paths.remote.resDir;
+        paths.behavDir = paths.remote.behavDir;
+        paths.eeglabDir = paths.remote.eeglabDir;
+        paths.libDir = paths.remote.libDir;
+        paths.stimFuncDir = paths.remote.stimFuncDir;
+        % path to electrode setup file
+        paths.elecSetup = [paths.libDir 'elec_96ch.elp'];
+        paths.cluster = 'remote';
+    else
+        error([':: Cluster configuration mismatch, could not configure ' ...
+               'paths.']);
     end
     
     paths.rawDir = [paths.rawDir paths.taskLabel{taskType}];

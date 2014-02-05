@@ -29,50 +29,64 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-USAGE:
-eeg_analysis(task_type,[subject_numbers])
-- task_type: 1 - simply passive EEG paradigm: no subject responses triggers 
-                 included
-             2 - active task: including response triggers and evaluating hit
-	     vs. miss events
-- subject_numbers: vector of subject numbers to include in the analysis
+USAGE: 
+
+in serial mode:     eeg_analysis(task_type,[numbers of subjects])
+in parallel mode:   eeg_analysis(taskType,[numbers of subjects],'parallelMethod')
+
+task_type:          1 - simply passive EEG paradigm: no subject responses 
+                        triggers included
+
+                    2 - active task: including response triggers and evaluating
+	                hit vs. miss events
+
+subject_numbers:    vector of subject numbers to include in the analysis
+
+'parallelMethod':   'submitJob' - submit prprocessing job to cluster
+                    'getJob' - retrieve preprocessed job data from cluster
+                    'plot' - omit preprocessing and plot processed data
+
 
 DEPENDENCIES: The following scripts and programs are needed for proper running
               of the scripts
 
-- Matlab
-- EEGLAB (http://sccn.ucsd.edu/eeglab/)
-- eeg_emcp - Andreas Widmann (http://github.com/widmann)
-- firfilt 1.5 - Andreas Widmann (http://github.com/widmann)
-- eeg_rejdelta - Andreas Widmann (http://github.com/widmann)
-- RMAOV1 - Trujillo-Ortiz, A., R. Hernandez-Walls and
-  R.A. Trujillo-Perez. (2004). RMAOV1:One-way repeated measures ANOVA. A
-  MATLAB file. (http://www.mathworks.com/matlabcentral/fileexchange)
+Matlab       - with parallel computing toolbox for batch preprocessing
+EEGLAB 13    - A Delorme & S Makeig (2004) EEGLAB: an open source toolbox 
+               for analysis of single-trial EEG dynamics. 
+               Journal of Neuroscience Methods 134:9-21 
+bv-io        - can be installed via EEGLAB extension manager 
+eeg_emcp     - Andreas Widmann (http://github.com/widmann)
+firfilt 1.6  - Andreas Widmann (http://github.com/widmann)
+eeg_rejdelta - Andreas Widmann (http://github.com/widmann)
+RMAOV1       - Trujillo-Ortiz, A., R. Hernandez-Walls and
+               R.A. Trujillo-Perez. (2004). RMAOV1:One-way repeated measures ANOVA. A
+               MATLAB file. URL: http://www.mathworks.com/matlabcentral/
+               fileexchange/loadFile.do?objectId=5576
+
 
 CONFIGURATION:
 - config (central configuration file)
 - triggerlabels.m (configuratiuon of trigger labels)
-- func/retrigConf.m (configuration for re-triggering)
-- func/changeTrig.m (define trigger range for omissions/deviants 
-  [for exclusions of events before and after the specified triggers])
+- channelInterp.m (configuration of to-be-interpolated channels for given subjects)
 
-The analyses can be run in single (normal) or in batch mode. To run several
-analysis subsequently define the parameters for each analysis in
-batch_analysis.m and start the analysis using batch_analysis([job_numbers])
-instead of using eeg_analysis.
+The analyses can be run in serial (normal) or in parallel mode. To run several
+analysis subsequently in parallel mode locally an several cores or remotely on a 
+cluster, you have to install the parallel computing toolbox of matlab and specify
+the desired parallel profile (as in parallel > Select Configuration) in your config.m
 
 ALREADY IMPLEMENTED:
 - the whole preprocessing procedure for brainvision recorder and BioSemi data
 - plotting of ERP data in 'electrode array' and 'statistics' mode
 - running t-test or running one-way RMANOVA with FDR correction over given  
   range of data-points
+- Cluster mode (run analysis on a remote HPC cluster)
 
 NOT YET IMPLEMENTED:
 - plotting of voltage maps and SCD maps
 - statistical testing
   - RMANOVA for predefined statistical factors
 - several plot callback functions
-- Cluster mode (run analysis on a remote HPC cluster)
+
 
 #############################################################################
 SHORT DESCRIPTION OF THE SCRIPTS:
@@ -86,7 +100,7 @@ Meta script which controls the whole analysis process.
 config.m
 
 Main configuration file. Nearly all analysis parameters, filter settings, path
-configurations, plotting options and trigger configurations are adjusted here.
+configurations and plotting options are adjusted here.
 -----------------------------------------------------------------------------
 triggerlabels.m
 
@@ -96,14 +110,20 @@ like color indices for plotting per trigger or line style options. The
 triggers are also assigned to pools determining which triggers the number of
 epochs for averaging if analysis.equalErp=1. The trigger with the least
 available epochs per subject determines the number of epochs which get
-averaged for the other triggers in the same pool. 
+averaged for the other triggers in the same pool. Also controls retriggering
+of original trigger codes in the retrigger section of the file: Each trigger
+specified in the left column of the cell will be replaced with the trigger in
+the right column of the corresponding line of the retrigger cell.
 -----------------------------------------------------------------------------
-batch_analysis.m
+channelInterp.m
 
-Define several analyses with different analysis parameters subsequently
-without getting prompted for input. ERP result files are saved with the index
-of the current job. All customizable parameters for each analysis are
-configured in this script.
+Determine interpolation parameters for given channels in given subjects
+for passive and active task.
+-----------------------------------------------------------------------------
+func/preprocess.m
+
+Determines the whole preprocessing sequence per subject and returns
+preprocessed subject data.
 -----------------------------------------------------------------------------
 func/prepSubDir.m
 
@@ -112,7 +132,7 @@ Prepares result folder for subject and returns its path.
 func/checkRawData.m
 
 Check if all requested raw Data is available and prepare path
-specification for the current subject
+specification for the current subject.
 -----------------------------------------------------------------------------
 func/loadRawData.m
 
@@ -127,27 +147,17 @@ blocks of the experiment are accidentally saved in the same file. In this case
 the raw file gets loaded as many times as blocks are contained within it which
 then get split at the given sampling points in paths.partFile.
 -----------------------------------------------------------------------------
-func/checkFileBiosig.m & func/checkFileBv.m
+func/checkFile.m
 
-Check the currently loaded raw data file for sampling rate, triggercodes
-and trigger latencies. The Biosig version treats the triggers as numerical and
-the brainvision version treats the triggers as strings.
+Check the currently loaded raw data file for sampling rate, triggercodes and
+trigger latencies. If BioSig raw data is used, all triggers are converted to
+strings for further preprocessing steps.
 -----------------------------------------------------------------------------
 func/change_trig.m
 
 Changes triggers at start of block to exclude them from the analysis,
-change omission triggers to hit vs. miss omissions and exclude events in
-predefined ranges around triggers and response trials. Keep care when
-specifying trigger types in config.m (use the appropriate format depending on
-how the triggers are saved in the raw data [biosig: numerical; brainvision:
-strings]) 
------------------------------------------------------------------------------
-func/retrigConf.m
-
-Takes current file and condition order and returns the retrigger Cell
-depending on the condition of the current file. Each trigger specified in
-the left column of the cell will be replaced with the trigger in the
-right column of the corresponding line of the retrigger cell.
+change target triggers to hit vs. miss targets and exclude events in
+predefined ranges around triggers and response trials. 
 -----------------------------------------------------------------------------
 func/bipolarize.m
 
@@ -162,7 +172,7 @@ in config.m under paths.elecSetup
 -----------------------------------------------------------------------------
 func/interpChan.m
 
-Interpolate channels specified in config.m as follows: the 1st column
+Interpolate channels specified in channelInterp.m as follows: the 1st column
 indicates the subject number. The second column indicates the electrode which
 is to be interpolated. If the electrode is given as a string the interpolation
 will be carried out before epoching over the whole block file [specified in
@@ -171,7 +181,7 @@ was broken and you already noticed while recording). If the channel is given
 as numerical number, the interpolation is carried out after epoching on the
 files which hold the same trigger [specified in the 3rd column] (for example
 if you see that lots of epoches were rejected because of bad data on the given
-channel) 
+channel)
 
 EXAMPLE:
 
@@ -233,9 +243,7 @@ the existing result file or to create a new one. If the existing result file
 is used, the ERP data of the existing subjects will be replaced by the newly
 processed data and the meta data of the current analysis will be saved
 additionally resulting in a structure array were each structure of the array
-represents the meta data of the separate analyses. This only works if the
-batch mode is disabled. With batch mode enabled a new ERP output file is
-written by default indicated with an extra marker of the current batch.
+represents the meta data of the separate analyses.
 
 the output ERP structure contains:
 
@@ -250,6 +258,7 @@ the output ERP structure contains:
   - date of analysis
   - EEGLAB version
   - and machine on which on which analysis was run
+  - cluster configuration
 - analysis: analysis parameters of each analysis 
 - paths: paths configuration of each analysis
 - trig: trigger setup of each analysis

@@ -22,7 +22,7 @@ function erpAll = reReference(erpAll,chanlocs,analysis)
     rerefInd = zeros(1,size(analysis.rerefChan,2));
     for iRefChan = 1:size(analysis.rerefChan,2)
         foundChan = 0;
-        for iChan = 1:size(chanlocs,2)
+        for iChan = 1:numel(chanlocs)
             if strcmp(analysis.rerefChan{iRefChan},chanlocs(iChan).labels)
                 rerefInd(iRefChan) = iChan;
                 foundChan = 1;
@@ -38,13 +38,17 @@ function erpAll = reReference(erpAll,chanlocs,analysis)
     
     if size(rerefInd,2) > 1
         % average given rereference channels
-        refChan = mean(erpAll,4);
+        refChan = mean(refChan,4);
     end
 
     disp(':: Re-referencing channels');
     % get channel list
     chanList = 1:size(erpAll,4);
-    % subtract each channel except 
-    erpAll(:,:,:,chanList(~ismember(chanList,rerefInd))) = bsxfun(@minus,erpAll(:,:,:,chanList(~ismember(chanList,rerefInd))),refChan);
+    % % subtract each channel except mastoids
+
+    
+    % erpAll(:,:,:,chanList(~ismember(chanList,rerefInd))) = bsxfun(@minus,erpAll(:,:,:,chanList(~ismember(chanList,rerefInd))),refChan);
+    % subtract each channel
+    erpAll(:,:,:,chanList) = bsxfun(@minus,erpAll(:,:,:,chanList),refChan);
     
     

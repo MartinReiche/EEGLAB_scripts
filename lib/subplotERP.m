@@ -147,7 +147,6 @@ switch lower(method)
         end
     end
     
-    
     % draw significant intervals
     if plotPar.runningStat && ~isempty(sigInt)
         % find start and end of significant intervals
@@ -175,7 +174,7 @@ switch lower(method)
             intStart = intBound(iInt,1) * timeRes + analysis.erpWin(1);
             intDur = (intBound(iInt,2) * timeRes +  analysis.erpWin(1))-intStart;
             % draw current intervall
-            rectangle('Position',[intStart -plotPar.yScale(2)*0.05 intDur plotPar.yScale(2)*0.05],...
+            rectangle('Position',[intStart plotPar.yScale(2)-plotPar.yCoef*0.1 intDur plotPar.yCoef*0.1],...
                       'FaceColor',[1 0.5 0.5],'EdgeColor','none');
         end
     end
@@ -261,6 +260,39 @@ switch lower(method)
 
         end
     end
+    
+    % draw significant intervals
+    if plotPar.runningStat && ~isempty(sigInt)
+        % find start and end of significant intervals
+        foundStart = 0;
+        intCount = 0;
+        diffSig = [diff(sigInt) == 1 0];
+        for iInt = 1:size(diffSig,2)
+            if diffSig(1,iInt) && ~foundStart
+                % increase the interval counter
+                intCount = intCount + 1;
+                % save start of current interval
+                intBound(intCount,1) = sigInt(iInt);
+                foundStart = 1;
+            elseif ~diffSig(1,iInt) && foundStart
+               % save end of current interval
+               intBound(intCount,2) = sigInt(iInt);
+               foundStart = 0;
+            end
+        end
+        % draw significant intervalls
+        for iInt = 1:size(intBound,1)
+
+            % for each intervall
+            % determine start end end of current intervall in ms relative to epoch start
+            intStart = intBound(iInt,1) * timeRes + analysis.erpWin(1);
+            intDur = (intBound(iInt,2) * timeRes +  analysis.erpWin(1))-intStart;
+            % draw current intervall
+            rectangle('Position',[intStart plotPar.yScale(2)-plotPar.yCoef*0.1 intDur plotPar.yCoef*0.1],...
+                      'FaceColor',[1 0.5 0.5],'EdgeColor','none');
+        end
+    end
+
     
     if plotPar.drawBaseLine && analysis.rmBase
         % mark baseline

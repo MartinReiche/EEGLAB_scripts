@@ -54,8 +54,6 @@ function plot_erp(erpAll,chanlocs,plotPar,trig,analysis,paths,taskType,restoredC
         indices = [trig.trigLabels{2}; cell2mat(trig.diffInd(:,3))];
         trig.color = [trig.color; trig.diffCol];
     end
-    
-
 
     %% get the line style of the curves from current config file
     plotPar.style = {};
@@ -92,12 +90,29 @@ function plot_erp(erpAll,chanlocs,plotPar,trig,analysis,paths,taskType,restoredC
     disp(':: Compute grand average ERPs');
     gavr = mean(erpAll,1);
 
+    % check validity of component windows
+    if ~isempty(plotPar.compWin)
+        for nComp = size(plotPar.compWin,1):-1:1
+            if analysis.erpWin(1) > plotPar.compWin(nComp,1) || analysis.erpWin(2) < plotPar.compWin(nComp,2)
+                disp(':: WARNING: Component window exceeds epoch range, skipping.');
+                plotPar.comps(nComp) = [];
+                plotPar.compWin(nComp,:) = [];
+            end
+        end
+    else
+        disp(':: WARNING: No component window given, skipping statistics');
+    end
+    if isempty(plotPar.compWin)
+        plotPar.comps = {};
+        plotPar.compWin = [];
+    end
+    
     if analysis.plotERPflag
         %% Plot curves at specified set of channels per figure
         % get position of channels for plotting
         channels2plot = zeros(1,size(plotPar.plotChannels,1));
         for nChannel = 1:size(plotPar.plotChannels,1) 
-            for n=1:size(chanlocs,2)
+            for n=1:numel(chanlocs)
                 if strcmp(chanlocs(n).labels,plotPar.plotChannels(nChannel,:))
                     channels2plot(nChannel) = n;
                 end
@@ -162,7 +177,7 @@ function plot_erp(erpAll,chanlocs,plotPar,trig,analysis,paths,taskType,restoredC
             
             % get minimal and maximal value for current figure
             iChan = [];
-            maxVal = getMax('electrode array',erpAll,analysis,plotPar,plotConds{iCond},labels,iChan,channels2plot);
+            maxVal = getMax('electrode array',erpAll,analysis,plotPar,plotConds{iCond},labels,chanlocs,iChan,channels2plot);
             plotPar.yScale(1) = maxVal.erpMin;
             plotPar.yScale(2) = maxVal.erpMax;
             plotPar.yScaleMean(1) = maxVal.meanMin;
@@ -202,6 +217,7 @@ function plot_erp(erpAll,chanlocs,plotPar,trig,analysis,paths,taskType,restoredC
                 spData.analysis = analysis;
                 spData.paths = paths;
                 spData.taskType = taskType;
+                spData.sigInt = [];
                 % assign UserData of current subplot
                 set(erpSpHandle,'UserData',spData);
                 set(erpSpHandle,'ButtonDownFcn',{@SubplotCallback,erpSpHandle});
@@ -260,7 +276,7 @@ function plot_erp(erpAll,chanlocs,plotPar,trig,analysis,paths,taskType,restoredC
         % get position of channels for plotting
         channels2plot = zeros(1,size(plotPar.plotChannelsStat,1));
         for nChannel = 1:size(plotPar.plotChannelsStat,1) 
-            for n=1:size(chanlocs,2)
+            for n=1:numel(chanlocs)
                 if strcmp(chanlocs(n).labels,plotPar.plotChannelsStat(nChannel,:))
                     channels2plot(nChannel) = n;
                 end
@@ -294,16 +310,18 @@ function plot_erp(erpAll,chanlocs,plotPar,trig,analysis,paths,taskType,restoredC
                     end
                 end
                 
-                erpAll
-                
                 % only when there are waves to plot for the current task
                 if ~isempty(plotConds)        
                     % get minimal and maximal value for current figure
-                    maxVal = getMax('statistics',erpAll,analysis,plotPar,plotConds,labels,iChan,channels2plot);
+                    maxVal = getMax('statistics',erpAll,analysis,plotPar,plotConds,labels,chanlocs,iChan,channels2plot);
                     plotPar.yScale(1) = maxVal.erpMin;
                     plotPar.yScale(2) = maxVal.erpMax;
-                    plotPar.yScaleMean(1) = maxVal.meanMin;
-                    plotPar.yScaleMean(2) = maxVal.meanMax;
+                    if ~isempty(plotPar.compWin)
+                        plotPar.yScaleMean(1) = maxVal.meanMin;
+                        plotPar.yScaleMean(2) = maxVal.meanMax;
+                    else
+                        plotPar.yScaleMean = [];
+                    end
 
                     % get subplot dimension parameters
                     plotDim = getDisp('statistics','structure',plotConds,'parameters',plotPar);
@@ -352,7 +370,6 @@ function plot_erp(erpAll,chanlocs,plotPar,trig,analysis,paths,taskType,restoredC
                         end
                         % create the subplot for the current channel
                         erpSpHandle = subplot(plotDim.nRow,plotDim.nCol,plotDim.curvePos(iPlot));
-
                         
                         % prepare UserData for current subplot
                         spData.chanData = chanData;
@@ -373,108 +390,114 @@ function plot_erp(erpAll,chanlocs,plotPar,trig,analysis,paths,taskType,restoredC
                         else
                             sigInt = [];
                         end
-                        
+                        spData.sigInt = sigInt;
                         % plot the current channel
                         pHandle = subplotERP('statistics','channel data',chanData,'sig',sigInt,'plot par',plotPar,'analysis',analysis);
                         h = legend(pHandle,plotConds{iPlot});
                         set(h, 'Location', 'southwest');
                         
-                        % Plot Bar diagram of components
-                        statSpHandle = subplot(plotDim.nRow,plotDim.nCol,plotDim.histPos(iPlot)); 
-                        hold on;
-                        
-                        % for each component window
-                        erpMean = zeros(size(plotPar.compWin,1),size(chanData,2));
-                        erpErr = erpMean;
-                        
-                        for iWin = 1:size(plotPar.compWin,1)
+                        if ~isempty(plotPar.compWin)
+                            % Plot Bar diagram of components
+                            statSpHandle = subplot(plotDim.nRow,plotDim.nCol,plotDim.histPos(iPlot)); 
+                            hold on;
                             
-                            statWin = [round(((plotPar.compWin(iWin,1)+abs(plotPar.xScale(1)))*analysis.sampRate)/1000) ...
-                                       round(((plotPar.compWin(iWin,2)+abs(plotPar.xScale(1)))*analysis.sampRate)/1000)];
+                            % for each component window
+                            erpMean = zeros(size(plotPar.compWin,1),size(chanData,2));
+                            erpErr = erpMean;
                             
-                            % get data for each wave
-                            for iWave = 1:size(chanData,2)
-                                erpMean(iWin,iWave) = mean(mean(squeeze(erpAll(:,currInd(iWave),statWin(1):statWin(2),channels2plot(iChan))),2));
-                                erpErr(iWin,iWave) = std(mean(squeeze(erpAll(:,currInd(iWave),statWin(1):statWin(2),channels2plot(iChan))),2))/sqrt(size(erpAll,1));
-                                % Save Data in results matrix columns resemble conditions 
-                                spData.resAll = [spData.resAll mean(squeeze(erpAll(:,currInd(iWave),statWin(1):statWin(2),channels2plot(iChan))),2)];
-                                spData.resAllParent = [spData.resAllParent mean(squeeze(erpAll(:,currInd(iWave),statWin(1):statWin(2),channels2plot(iChan))),2)];                                
-                                % write header for current column
-                                spData.resHead = [spData.resHead [char(plotPar.plotCondsStat{iPlot,iFig}(iWave)) 'Win' num2str(iWin)]];
-                                spData.resHeadParent = [spData.resHeadParent [char(plotPar.plotCondsStat{iPlot,iFig}(iWave)) 'Win' num2str(iWin)]];
-                            end
-                        end 
-                        % store erpMean and erpErr values in spData for subplot Callback
-                        spData.erpMean = erpMean;
-                        spData.erpErr = erpErr;
-                        
-                        % plot histogram
-                        if size(plotPar.comps,1) == 1
-                            % plot each bar separately if the there is only one component window
-                            % (otherwise there will be problems with the bar
-                            % coloring)
-                            for iBar = 1:size(erpMean,2)
-                                bar(iBar,erpMean(iBar),'facecolor',plotPar.currColor(iBar,:));
-                            end
-                        else
-                            hB = bar(erpMean);
-                        end
-                        % color the bars according to the waves in the plots
-                        if size(plotPar.comps,1) > 1
-                            for iWave = 1:size(erpMean,2)
-                                set(hB(iWave),'facecolor',plotPar.currColor(iWave,:));
-                            end
-                        end
-
-                        numgroups = size(erpMean, 1);
-                        numbars = size(erpMean, 2);
-                        
-                        groupwidth = min(0.8, numbars/(numbars+1.5));
-
-                        % Based on barweb.m by Bolu Ajiboye from MATLAB File Exchange
-                        xVec = [];
-                        for iBar = 1:numbars
+                            for iWin = 1:size(plotPar.compWin,1)
+                                
+                                statWin = [round(((plotPar.compWin(iWin,1)+abs(plotPar.xScale(1)))*analysis.sampRate)/1000) ...
+                                           round(((plotPar.compWin(iWin,2)+abs(plotPar.xScale(1)))*analysis.sampRate)/1000)];
+                                
+                                % get data for each wave
+                                for iWave = 1:size(chanData,2)
+                                    erpMean(iWin,iWave) = mean(mean(squeeze(erpAll(:,currInd(iWave),statWin(1):statWin(2),channels2plot(iChan))),2));
+                                    erpErr(iWin,iWave) = std(mean(squeeze(erpAll(:,currInd(iWave),statWin(1):statWin(2),channels2plot(iChan))),2))/sqrt(size(erpAll,1));
+                                    % Save Data in results matrix columns resemble conditions 
+                                    spData.resAll = [spData.resAll mean(squeeze(erpAll(:,currInd(iWave),statWin(1):statWin(2),channels2plot(iChan))),2)];
+                                    spData.resAllParent = [spData.resAllParent mean(squeeze(erpAll(:,currInd(iWave),statWin(1):statWin(2),channels2plot(iChan))),2)];                                
+                                    % write header for current column
+                                    spData.resHead = [spData.resHead [char(plotPar.plotCondsStat{iPlot,iFig}(iWave)) 'Win' num2str(iWin)]];
+                                    spData.resHeadParent = [spData.resHeadParent [char(plotPar.plotCondsStat{iPlot,iFig}(iWave)) 'Win' num2str(iWin)]];
+                                end
+                            end 
+                            % store erpMean and erpErr values in spData for subplot Callback
+                            spData.erpMean = erpMean;
+                            spData.erpErr = erpErr;
+                            
+                            % plot histogram
                             if size(plotPar.comps,1) == 1
-                                x = iBar;
-                                xVec = [xVec x];
-                            else                        
-                                x = (1:numgroups) - groupwidth/2 + (2*iBar-1) * groupwidth / (2*numbars); % Aligning error bar with individual bar
-                                xVec = [xVec x];
+                                % plot each bar separately if the there is only one component window
+                                % (otherwise there will be problems with the bar
+                                % coloring)
+                                for iBar = 1:size(erpMean,2)
+                                    bar(iBar,erpMean(iBar),'facecolor',plotPar.currColor(iBar,:));
+                                end
+                            else
+                                hB = bar(erpMean);
                             end
-                            errorbar(x, erpMean(:,iBar), erpErr(:,iBar), 'k', 'linestyle', 'none');
-                        end
-                        % reshape the bar positions according to the component windows
-                        if size(erpMean,1) > 1
-                            xVec = reshape(xVec,size(erpMean,1),size(erpMean,2));
-                        else
-                            set(gca,'XLim',[(xVec(1) - 1) (xVec(end) + 1)]);
-                        end
-                        % get the central position (centarl bar) of each component windows
-                        xTickPos = zeros(1,size(xVec,1));
-                        for iWin = 1:size(xVec,1)
-                            xTickPos(1,iWin) = median(xVec(iWin,:));
-                        end
-                        set(gca,'XTick',xTickPos);
-                        set(gca,'XTickLabel',plotPar.winNames);
-                        set(gca,'YLim',[(maxVal.meanMin - plotPar.yOverhead)  (maxVal.meanMax + plotPar.yOverhead)]);
-                        set(get(gca,'YLabel'),'String','Voltage (micro Volts)');
+                            % color the bars according to the waves in the plots
+                            if size(plotPar.comps,1) > 1
+                                for iWave = 1:size(erpMean,2)
+                                    set(hB(iWave),'facecolor',plotPar.currColor(iWave,:));
+                                end
+                            end
+
+                            numgroups = size(erpMean, 1);
+                            numbars = size(erpMean, 2);
+                            
+                            groupwidth = min(0.8, numbars/(numbars+1.5));
+
+                            % Based on barweb.m by Bolu Ajiboye from MATLAB File Exchange
+                            xVec = [];
+                            for iBar = 1:numbars
+                                if size(plotPar.comps,1) == 1
+                                    x = iBar;
+                                    xVec = [xVec x];
+                                else                        
+                                    x = (1:numgroups) - groupwidth/2 + (2*iBar-1) * groupwidth / (2*numbars); % Aligning error bar with individual bar
+                                    xVec = [xVec x];
+                                end
+                                errorbar(x, erpMean(:,iBar), erpErr(:,iBar), 'k', 'linestyle', 'none');
+                            end
+                            % reshape the bar positions according to the component windows
+                            if size(erpMean,1) > 1
+                                xVec = reshape(xVec,size(erpMean,1),size(erpMean,2));
+                            else
+                                set(gca,'XLim',[(xVec(1) - 1) (xVec(end) + 1)]);
+                            end
+                            % get the central position (centarl bar) of each component windows
+                            xTickPos = zeros(1,size(xVec,1));
+                            for iWin = 1:size(xVec,1)
+                                xTickPos(1,iWin) = median(xVec(iWin,:));
+                            end
+                            set(gca,'XTick',xTickPos);
+                            set(gca,'XTickLabel',plotPar.winNames);
+                            set(gca,'YLim',[(maxVal.meanMin - plotPar.yOverhead)  (maxVal.meanMax + plotPar.yOverhead)]);
+                            set(get(gca,'YLabel'),'String','Voltage (micro Volts)');
+                            set(statSpHandle,'ButtonDownFcn',{@SubplotCallback,erpSpHandle});
                         
+                            % add savebutton
+                            UIsave = uicontrol(fh,'Style', 'pushbutton', 'String', 'Save Data',...
+                                               'Position', [5 10 100 40]);
+                            
+                            % Assigning relevant data for UI UserData
+                            set(UIsave,'UserData',spData);
+                            set(UIsave,'Callback',{@saveRes,UIsave});
+                        end
                         % assign UserData of current subplot
                         set(erpSpHandle,'UserData',spData);
                         set(erpSpHandle,'ButtonDownFcn',{@SubplotCallback,erpSpHandle});
-                        set(statSpHandle,'ButtonDownFcn',{@SubplotCallback,erpSpHandle});
-                        
-                        % add savebutton
-                        UIsave = uicontrol(fh,'Style', 'pushbutton', 'String', 'Save Data',...
-                                           'Position', [5 10 100 40]);
-                        
-                        % Assigning relevant data for UI UserData
-                        set(UIsave,'UserData',spData);
-                        set(UIsave,'Callback',{@saveRes,UIsave});
-                        
                     end % for iPlot
-                    UIhandle.newPlot = uicontrol(fh,'Style', 'pushbutton', 'String', 'New Plot',...
-                                                 'Position', [110 10 80 40]);
+                    
+                    if isempty(plotPar.compWin)
+                        UIhandle.newPlot = uicontrol(fh,'Style', 'pushbutton', 'String', 'New Plot',...
+                                                     'Position', [5 10 100 40]);
+                    else
+                        UIhandle.newPlot = uicontrol(fh,'Style', 'pushbutton', 'String', 'New Plot',...
+                                                     'Position', [110 10 80 40]);
+                    end
                     % Set UserData for NewPlot Button
                     plotData.erpAll = urerpAll;
                     plotData.chanlocs = urchanlocs;

@@ -1,3 +1,86 @@
+2014-02-05  Martin Reiche  <reiche.stud@googlemail.com>
+
+	* eeg_analysis.m: Controls the whole preprocessing and plotting
+	routines. Handles parallel job submission and job data
+	retrieval. In serial mode it submits single subjects to
+	preprocessing routine and combines resulting data of several
+	subjects. In parallel mode, creates scheduler, gathers file and
+	path dependencies, submits jobs to schedulers and retrieves job
+	data from scheduler if the jobs are finished. It returns scheduler
+	and job handles in parallel mode and determines resources for
+	remote cluster job submission.
+
+	* config.m: Several minor changes: deviant triggers for later
+	exclusion of events around those triggers are now specified here
+	as compared to earlier versions. retrigConf.m was deleted.
+
+	* func/preprocess.m: Now the whole preprocessing routine is
+	handled by this function. Nothing really changes except, that each
+	subject is now processed separately and the preprocessed data is
+	returned by preprocess.m which gets combined later by save_erp.m.o
+
+	* channelInterp.m: Configurations for channel interpolations for
+	given subjects is now handled in this file.
+
+	* triggerlabels.m: Retriggering is now also specified here. In
+	earlier versions this was configured in /func/retrigConfo.m which
+	was now dropped. Unwanted events can now also be specified here
+	which then get removed shortly after raw data was loaded.
+
+	* func/loadRawData.m (loadRawData): Reference channel is now
+	removed after loading of raw data because that caused trouble when
+	rejecting flat epochs (Reference channel consisted of zeros only)
+
+	* lib/subplotERP.m: Plotting of significant intervals in single
+	clicked ERP plot implemented.
+
+	* lib/runningStat.m: Now check plausibility of stats window. If
+	stats window is exceeding the epoch range, the stats window is
+	adapted to the epoch length.
+
+	* func/singleERP.m: Only plots ERP plot in full screen (without
+	bar diagram) if no statistics window for running stats is
+	available. If it is available, now the significant intervals are
+	also displayed in the single clicked ERP plots.
+
+	* func/save_erp.m: Major changes: writing of usable data log files
+	is now performed here instead of eeg_rejection.m, a summary usable
+	data file is now created as well reporting the overall usable data
+	usable data of each subject. Several pieces of meta information
+	are now also written out to usable data log files.
+
+	* func/reReference.m: re-referencing was accidentally not
+	performed against re-reference channel or average of re-reference
+	channels but against average of all scalp channels. Fixed.
+
+	* func/prepSubDir.m: fixed minor bug with indexing of subject
+	number.
+
+	* func/plot_erp.m: Component windows are now checked for
+	plausibility and windows with ranges exceeding the epoch are
+	ignored.
+
+	* func/getMax.m: Eye channels are now ignored for determination of
+	maximal values.
+
+	* func/eeg_rejection.m: Now returns amount of usable data per
+	subject as variable and does not write information in usable data
+	files anymore. This routine is now handled by save_erp.m
+
+	* func/checkFile.m (checkFile): Fixed Bug in trigger latency check
+	routine. Alert function was broken that warned the user if
+	predefined amount of triggers was exceeding predefined latency
+	range. Now excludes all triggers as specified in variable
+	trig.delete in triggerlabels.m and not only 'boundary' events
+	anymore.
+
+	* func/change_trig.m: Trigger codes of deviant, target and
+	responses for trigger exclusion are now configured in config.m and
+	not here anymore
+
+	* func/calc_diff.m: Now opens a loading GUI if no preprocessed ERP
+	file is found in the specified results folder.
+
 2013-11-28  Martin Reiche  <reiche.stud@googlemail.com>
 
 	* func/prepSubDir.m: Fixed a minor bug in the check procedure of

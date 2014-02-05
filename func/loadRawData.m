@@ -21,14 +21,14 @@ function [EEG ,block, analysis, paths] = loadRawData(paths,nSubj,nSession,iFile,
     %% get channel number of nose for current subject
     % if iFile == 1
     
-    if counter == 1 && strcmpi(analysis.rawFormat,'biosig')
+    if counter == 1 && strcmpi(analysis.rawFormat,'biosemi')
         foundRef = 0;
         disp(' ');
         disp([':: Get number of reference channel for subject ' num2str(nSubj, ...
                                                           '%0.2d')]);
         disp(' ');
         EEG = pop_biosig(rawFile);
-        for iChan = 1:size(EEG.chanlocs,1)
+        for iChan = 1:numel(EEG.chanlocs)
             if strcmpi(EEG.chanlocs(iChan).labels,analysis.refChan)
                 analysis.refChanNum = iChan;
                 foundRef = 1;
@@ -64,9 +64,13 @@ function [EEG ,block, analysis, paths] = loadRawData(paths,nSubj,nSession,iFile,
 
     % check if reference channel number is right
     if strcmpi(analysis.rawFormat,'biosemi')
-        if ~strcmpi(EEG.chaninfo.nodatchans.ref,analysis.refChan) 
+        if ~strcmpi(EEG.chanlocs(1).ref,analysis.refChan) 
             input([':: Detected wrong reference channel. Expected: ' analysis.refChan ', got: ' ...
-                   EEG.chaninfo.nodatchans.ref]);
+                   EEG.chanlocs(1).ref]);
+        else
+            % remove reference channel
+            disp(':: Removing reference channel');
+            EEG = pop_select(EEG,'nochannel',analysis.refChanNum);
         end
     end
 
@@ -79,7 +83,7 @@ function [EEG ,block, analysis, paths] = loadRawData(paths,nSubj,nSession,iFile,
 
     % delete channel EXG8
     foundExg = 0;
-    for iChan = 1:size(EEG.chanlocs,1)
+    for iChan = 1:numel(EEG.chanlocs)
         if strcmpi(EEG.chanlocs(iChan).labels,analysis.exgChan)
             exgChanNum = iChan;
             foundExg = 1;
