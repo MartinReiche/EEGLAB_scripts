@@ -2,12 +2,25 @@
 % steps using EEGLAB
 %
 % USAGE: 
+%
 % in serial mode:       eeg_analysis(taskType,[numbers of subjects])
-% in parallel mode:     eeg_analysis(taskType,[numbers of subjects],'parallelMethod')
+% in parallel mode:     eeg_analysis(taskType,[numbers of subjects],'method')
 % 
-%  'parallelMethod':    'submitJob' - submit prprocessing job to cluster
+%         'method':     'submitJob' - submit prprocessing job to cluster
 %                       'getJob' - retrieve preprocessed job data from cluster
 %                       'plot' - omit preprocessing and plot processed data
+%                       'usabledata' - get amount of usable data per subject
+%                                      and return vector of subject number
+%                                      with usable data above given threshold
+%                                      [threshold must be specified as
+%                                      argument]
+% OUTPUT:
+%
+%        no method:      nothing
+%       'submitJob:      scheduler and job handle
+%         'getJob':      scheduler and job handle
+%           'plot':      nothing
+%     'usabledata':      vector of subject numbers above threshold of usable data
 %
 % NEEDS:
 % 
@@ -24,7 +37,7 @@
 %                fileexchange/loadFile.do?objectId=5576
 %
 % Files you need to configure:
-% - config (central configuration file)
+% - config.m (central configuration file)
 % - triggerlabels.m (configuratiuon of trigger labels)
 % - channelInterp.m (configuration of to-be-interpolated channels for given subjects)
 %
@@ -45,7 +58,7 @@
 % along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 % Please define all parameters in config.m
-function [sched,job] = eeg_analysis(taskType,subjects,parallelMode)
+function varargout = eeg_analysis(taskType,subjects,method,threshold)
 
     % Get analysis parameters
     analysis = config('parameters','task',taskType);
@@ -116,8 +129,8 @@ function [sched,job] = eeg_analysis(taskType,subjects,parallelMode)
             filtPar = subData.filtPar;
             % save preprocessed data
             save_erp(subErp,subErpEqual,subTrialInd,corrTrials,numEvent,rejEpoch,trialNum,subjects,paths,trig,dur,analysis,filtPar,rejLog);
-            job = [];
-            sched = [];
+            % define output arguments
+            varargout{1} = [];
           else
             %% parallel processing
             
@@ -130,7 +143,7 @@ function [sched,job] = eeg_analysis(taskType,subjects,parallelMode)
             end
             % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             
-            switch parallelMode
+            switch method
               case 'submitJob'
                 % create cell array of input argument for each task
                 inArgs = cell(1,size(subjects,2));
@@ -144,10 +157,10 @@ function [sched,job] = eeg_analysis(taskType,subjects,parallelMode)
                     fd1{iFile} = [pwd '/' files(iFile).name];
                 end
                 % and in functions folder
-                files = dir([pwd '/func/*.m']);
+                files = dir([paths.funcDir '*.m']);
                 fd2 = cell(1,size(files,1));
                 for iFile = 1:size(files,1)
-                    fd2{iFile} = [pwd '/func/' files(iFile).name];
+                    fd2{iFile} = [paths.funcDir files(iFile).name];
                 end
                 % combine file dependencies from func and main folder
                 fd = [fd1 fd2];
@@ -177,7 +190,9 @@ function [sched,job] = eeg_analysis(taskType,subjects,parallelMode)
 
                 % submit the job to the scheduler
                 submit(job);
-                
+                % define output arguments
+                varargout{1} = sched;
+                varargout{2} = job;                
               case 'getJob'
                 job = get(sched,'Jobs');
                 % specify Job ID
@@ -250,19 +265,29 @@ function [sched,job] = eeg_analysis(taskType,subjects,parallelMode)
                     disp(':: There are unfinished tasks for the current job');
                     task
                 end
+                % define output arguments
+                varargout{1} = sched;
+                varargout{2} = job;                
               case 'plot'
-                sched = [];
-                job = [];
+                % define output arguments
+                varargout{1} = [];
                 % set raw and result Dir
                 paths.rawDirAll = paths.local.rawDir;
                 paths.resDirAll = paths.local.resDir;
+              case 'usabledata'
+                if nargin < 4
+                   error(':: Threshold of acceptable usable data in percent must be specified') 
+                end
+                paths.rawDirAll = paths.local.rawDir;
+                paths.resDirAll = paths.local.resDir;
+                varargout{1} = usabledata(paths,threshold);
               otherwise
-                error([':: There is no option called ' parallelMode '.']);
+                error([':: There is no option called ' method '.']);
             end
         end
     end % preprocessing
         
-    if (~analysis.parallel && nargin < 3) || strcmpi(parallelMode,'plot')
+    if (~analysis.parallel && nargin < 3) || strcmpi(lower(method),'plot')
         %% Calculation of difference
         % calculate difference waves
         [erpAll, restoredConf, chanlocs, trig] = calc_diff(subjects,paths,analysis,taskType);

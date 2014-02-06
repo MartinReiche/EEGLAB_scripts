@@ -520,7 +520,7 @@ switch lower(Method)
         end
     end
     % fetch trigger codes, trigger labels and diffwave configurations
-    trig = triggerlabels(trig,taskType);
+    trig = triggerlabels('triggers',trig,taskType);
     % Initialize Trigger Matrix and Label array for given Task
     trig.newTriggers = {};
     trig.trigLabels = {};

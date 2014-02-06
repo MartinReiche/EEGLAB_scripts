@@ -1,5 +1,30 @@
 2014-02-06  Martin Reiche  <reiche.stud@googlemail.com>
 
+	* eeg_analysis.m (eeg_analysis): New method for displaying usable
+	data per subject implemented. When calling
+	eeg_analysis(task,subjects,'usabledata',threshold) the user now
+	gets prompted to select an ERP file and the amount of usable data
+	per subject as well as the amount of usable data overall for the
+	current ERP file is displayed. A rejection threshold for an
+	acceptable amount of usable data must be given. Subjects below
+	this threshold are marked for rejection. A vector of subject
+	numbers still within the acceptable threshold is
+	returned. Depending on the method specified when calling
+	eeg_analysis the output arguments variably change. 'submitJob' and
+	'getJob' return the scheduler and job handle, 'plot' returns
+	nothing and 'usabledata' returns vector of subject numbers above
+	the given threshold of acceptable usable data.
+	
+	* config.m: Trigger configuration parameters were not called
+	correctly. Fixed.
+
+	* func/usabledata.m: Added. Function displaying the amount of
+	usable data for a given ERP file. Gets called by eeg_analysis.m
+	with 'method' usable data and given rejection threshold in
+	percent. All subjects' usable data is displayed, subjects below
+	the threshold are marked for rejection. Vector of subject numbers
+	still within the acceptable threshold is returned.
+
 	* triggerlabels.m (triggerlabels): Added option trig.changeLat
 	where a duration in milliseconds can be specified by which all
 	triggers get shifted. If the duration is negative all triggers get
