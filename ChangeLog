@@ -1,3 +1,18 @@
+2014-02-06  Martin Reiche  <reiche.stud@googlemail.com>
+
+	* triggerlabels.m (triggerlabels): Added option trig.changeLat
+	where a duration in milliseconds can be specified by which all
+	triggers get shifted. If the duration is negative all triggers get
+	shifted back in time by the given duration and if it is positive
+	the triggers get delayed by the specified duration.
+
+	* func/change_trig.m (change_trig): Implemented trigger latency
+	correction procedure. Allows the user to shift the latency of all
+	triggers by given duration in milliseconds if a constant stimulus -
+	trigger latency was present during recording. The duration of the
+	latency shift can be specified in the variable
+	trig.changeLat in the file triggerlabels.m.
+
 2014-02-05  Martin Reiche  <reiche.stud@googlemail.com>
 
 	* eeg_analysis.m: Controls the whole preprocessing and plotting

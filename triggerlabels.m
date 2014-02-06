@@ -25,6 +25,9 @@ trig.rejThresh.resp = 5;
 trig.rejThresh.note = 5;
 % enable to pause the analysis if trig.rejThresh.note is exceeded
 trig.rejThresh.pause = 0;
+% latency shift for all triggers (in case there was a constant latency
+% during recording)
+trig.changeLat = [];
 % start trigger of each raw file
 trig.startTrig = '254';
 % end trigger of each raw file

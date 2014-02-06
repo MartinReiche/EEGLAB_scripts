@@ -141,6 +141,17 @@ if taskType == 2
     end
 end
 
+% change trigger latencies if intended
+if ~isempty(trig.changeLat)
+   % calculating latency change in sampling points
+   latShift = round((analysis.sampRate/1000)*trig.changeLat);
+   disp([':: Correcting trigger latencies. Shift latencies by ' num2str(trig.changeLat) ' ms (' num2str(latShift) ' sampling points)']);
+   % shifting latency for all triggers
+   for iTrig = 1:size(EEG.event,2)
+       EEG.event(iTrig).latency =  EEG.event(iTrig).latency + latShift;
+   end
+end
+
 % change the triggers as indiated by func/retrigConf.m
 if analysis.changeTrig 
     reTrig = triggerlabels('retrig',trig,taskType)
