@@ -3,7 +3,7 @@ averaging and plotting of EEG (ERP) data using MATLAB and the EEGLAB toolbox.
 The scripts are under current development with no guarantee of proper
 functioning. The scripts are published in the hopes of helping people getting
 started using EEGLAB and MATLAB to process EEG data (and for the sake of free
-code). Currently works Brainvision Recorder raw Data. 
+code). Currently works Brainvision Recorder and BioSemi raw Data. 
 
 EEG data is processed per subject. Data of several subjects can be processed
 in parallel using the parallel computing toolbox of MATLAB depending on your
@@ -29,24 +29,6 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-USAGE: 
-
-in serial mode:     eeg_analysis(task_type,[numbers of subjects])
-in parallel mode:   eeg_analysis(taskType,[numbers of subjects],'parallelMethod')
-
-task_type:          1 - simply passive EEG paradigm: no subject responses 
-                        triggers included
-
-                    2 - active task: including response triggers and evaluating
-	                hit vs. miss events
-
-subject_numbers:    vector of subject numbers to include in the analysis
-
-'parallelMethod':   'submitJob' - submit prprocessing job to cluster
-                    'getJob' - retrieve preprocessed job data from cluster
-                    'plot' - omit preprocessing and plot processed data
-
-
 DEPENDENCIES: The following scripts and programs are needed for proper running
               of the scripts
 
@@ -63,16 +45,32 @@ RMAOV1       - Trujillo-Ortiz, A., R. Hernandez-Walls and
                MATLAB file. URL: http://www.mathworks.com/matlabcentral/
                fileexchange/loadFile.do?objectId=5576
 
+USAGE: 
+
+The analyses can be run in serial (normal) or in parallel mode. To run several
+analysis subsequently in parallel mode locally on several cores or remotely on a 
+cluster, you have to install the parallel computing toolbox of matlab and specify
+the desired parallel profile (as in parallel > Select Configuration) in your config.m
+
+in serial mode:     eeg_analysis(task_type,[numbers of subjects])
+in parallel mode:   eeg_analysis(taskType,[numbers of subjects],'parallelMethod')
+
+task_type:          1 - simply passive EEG paradigm: no subject responses 
+                        triggers included
+
+                    2 - active task: including response triggers and evaluating
+	                hit vs. miss events
+
+subject_numbers:    vector of subject numbers to include in the analysis
+
+'parallelMethod':   'submitJob' - submit prprocessing job to cluster
+                    'getJob' - retrieve preprocessed job data from cluster
+                    'plot' - omit preprocessing and plot processed data
 
 CONFIGURATION:
 - config (central configuration file)
 - triggerlabels.m (configuratiuon of trigger labels)
 - channelInterp.m (configuration of to-be-interpolated channels for given subjects)
-
-The analyses can be run in serial (normal) or in parallel mode. To run several
-analysis subsequently in parallel mode locally an several cores or remotely on a 
-cluster, you have to install the parallel computing toolbox of matlab and specify
-the desired parallel profile (as in parallel > Select Configuration) in your config.m
 
 ALREADY IMPLEMENTED:
 - the whole preprocessing procedure for brainvision recorder and BioSemi data
@@ -86,7 +84,6 @@ NOT YET IMPLEMENTED:
 - statistical testing
   - RMANOVA for predefined statistical factors
 - several plot callback functions
-
 
 #############################################################################
 SHORT DESCRIPTION OF THE SCRIPTS:
