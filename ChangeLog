@@ -1,3 +1,9 @@
+2014-02-07  Martin Reiche  <reiche.stud@googlemail.com>
+
+	* lib/subplotERP.m (subplotERP): Plotting of component markers,
+	significant intervals and baseline markers for the single-clicked
+	ERP plots were in wrong layer order. Fixed.
+
 2014-02-06  Martin Reiche  <reiche.stud@googlemail.com>
 
 	* eeg_analysis.m (eeg_analysis): New method for displaying usable

@@ -248,6 +248,16 @@ switch lower(method)
         yScale(2) = plotPar.yScale(2);
     end
 
+    if plotPar.drawBaseLine && analysis.rmBase
+        % mark baseline
+        rectangle('Position',[plotPar.baseWin(1) plotPar.yScale(1)...
+                            plotPar.baseWin(2)-plotPar.baseWin(1)...
+                            plotPar.yScale(2)-plotPar.yScale(1)],'FaceColor',[0.9 ...
+                            0.9 0.9],'EdgeColor','none');
+        % plot baseline label
+        text(plotPar.baseWin(1)+10,plotPar.yScale(1)-0.15*plotPar.yCoef,'Baseline','FontSize',11);
+    end
+    
     % add component boxes
     for nComp = 1:size(plotPar.comps,1)
         if plotPar.compWin(nComp,2)-plotPar.compWin(nComp,1) > 0
@@ -292,18 +302,6 @@ switch lower(method)
                       'FaceColor',[1 0.5 0.5],'EdgeColor','none');
         end
     end
-
-    
-    if plotPar.drawBaseLine && analysis.rmBase
-        % mark baseline
-        rectangle('Position',[plotPar.baseWin(1) plotPar.yScale(1)...
-                            plotPar.baseWin(2)-plotPar.baseWin(1)...
-                            plotPar.yScale(2)-plotPar.yScale(1)],'FaceColor',[0.9 ...
-                            0.9 0.9],'EdgeColor','none');
-        % plot baseline label
-        text(plotPar.baseWin(1)+10,plotPar.yScale(1)-0.15*plotPar.yCoef,'Baseline','FontSize',11);
-    end
-
 
     % add name of the electrode to the current plot
     text(plotPar.xScale(1)+10,yScale(1)+0.45*plotPar.yCoef,plotPar.currChanLabel,'FontSize',16);
