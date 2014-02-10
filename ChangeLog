@@ -1,3 +1,12 @@
+2014-02-10  Martin Reiche  <reiche.stud@googlemail.com>
+
+	* func/eeg_rejection.m: Fixed a bug in the epoching routine for
+	selecting multiple events in one block.
+
+	* func/change_trig.m: There was a bug in the retrigger
+	routine. Fixed. Function needs one more argument now indicating
+	the number of the condition of the current block in order to work.
+
 2014-02-07  Martin Reiche  <reiche.stud@googlemail.com>
 
 	* lib/subplotERP.m (subplotERP): Plotting of component markers,

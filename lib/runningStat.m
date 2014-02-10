@@ -48,19 +48,18 @@ timeRes = 1000/spData.analysis.sampRate;
 % get relevant range for testing (in ms from beginning
 statRangeMS = [abs(spData.analysis.erpWin(1) - spData.plotPar.runStatWin(1))...
                abs(spData.analysis.erpWin(1) - spData.plotPar.runStatWin(2))];
+
 % convert ms timerange to datapoints
 statRange = [ceil(statRangeMS(1)/timeRes) floor(statRangeMS(2)/timeRes)];
 % convert zeros to one
 statRange(statRange == 0) = 1;
 % get relevant data
 statData = erpAll(:,spData.currInd,statRange(1):statRange(2),spData.channelIndex);
-
 % initialize array to store p values
 pVals = zeros(1,size(statData,3));    
 % Go through all the timepoints
 for iPoint = 1:size(statData,3)
     % perfrom one-way RMANOVA with the factor CONDITION (available waves per plot) 
-    
     pVals(iPoint) = OneWayrmAoV(statData(:,:,iPoint));
     
 end    

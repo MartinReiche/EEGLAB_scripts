@@ -112,7 +112,7 @@ for iTrig = 1:size(trig.triggers,1)
         % Interpolation of predefined channels
         EEG = interpChan(EEG,analysis,iSubj,currTrig);
         % Select all events marked as iTrig
-        EEG2 = pop_selectevent(EEG,'type',currTrig,'latency','-10 <= 10','deleteevents','off','deleteepochs','on');
+        EEG2 = pop_selectevent(EEG,'type',trig.triggers{iTrig,1},'latency','-10 <= 10','deleteevents','off','deleteepochs','on');
         
         clear EEG;
         % display number of events for the current trigger and the current subject before rejection

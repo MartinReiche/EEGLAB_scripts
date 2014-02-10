@@ -181,6 +181,7 @@ end
 
 % Select current Subjects
 erpAll = erpAll(subjects(:),:,:,:);
+
 % rereference electrodes
 if analysis.reref
     erpAll = reReference(erpAll,chanlocs,analysis);

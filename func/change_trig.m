@@ -154,7 +154,7 @@ end
 
 % change the triggers as indiated by func/retrigConf.m
 if analysis.changeTrig 
-    reTrig = triggerlabels('retrig',trig,taskType)
+    reTrig = triggerlabels('retrig',trig,taskType,condOrder(iFile));
     % retrigger events
     disp(':: Retriggering');
     % start retriggering according to specified triggers in retrigConf.m
