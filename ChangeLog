@@ -1,5 +1,8 @@
 2014-02-10  Martin Reiche  <reiche.stud@googlemail.com>
 
+	* triggerlabels.m (triggerlabels): Added additional argument
+	indicating condition number for retriggering routine.
+
 	* func/eeg_rejection.m: Fixed a bug in the epoching routine for
 	selecting multiple events in one block.
 

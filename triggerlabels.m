@@ -1,5 +1,5 @@
 % Names of triggers and trigger configurations
-function trig = triggerlabels(method,trig,taskType)
+function trig = triggerlabels(method,trig,taskType,cond)
 %% TRIGGER CONFIGURATIONS %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Original Triggers
 % 1 - first tone of pair (no preceding pair)
@@ -103,6 +103,6 @@ switch lower(method)
     %     {'Original trigger'}, {'new trigger'}};  
     %
     % example:
-    %     {'41'}, num2str((100 * condOrder(iFile)) + 41);  
+    %     {'41'}, num2str((100 * cond + 41);  
              };    
 end
