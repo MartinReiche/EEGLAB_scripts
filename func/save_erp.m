@@ -32,7 +32,7 @@ if isfield(paths,'allFiles')
 end
 
 % load chanlocs to save in erp structure
-load([paths.resDirAll 'chanlocs.mat']);
+load([paths.chanlocs 'chanlocs.mat']);
 
 % calculate analysis duration
 startVec = datevec(dur.Start,'ddd mmm DD HH:MM:SS');

@@ -104,6 +104,13 @@ function out = preprocess(taskType,iSubj,analysis,filtPar,trig,paths)
     out.filtPar = filtPar;
     out.trig = trig;
     out.paths = paths;
+
+    % if this is the last subject of the current Job and the result dir of
+    % the current job is empty, remove the result dir of the current job
+    resFolders = dir([paths.resDirAll 'vp*']);
+    if max(analysis.subjects) == iSubj && analysis.parallel && size(resFolders,1) == 0
+        rmdir(paths.resDirAll);
+    end
     
     % clear unused variables
     clear analysis filtPar trig paths eventCount condOrder;

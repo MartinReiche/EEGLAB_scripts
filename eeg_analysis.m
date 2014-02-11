@@ -145,11 +145,6 @@ function varargout = eeg_analysis(taskType,subjects,method,threshold)
             
             switch method
               case 'submitJob'
-                % create cell array of input argument for each task
-                inArgs = cell(1,size(subjects,2));
-                for iTask = 1:size(subjects,2)
-                    inArgs{iTask} = {taskType subjects(iTask),analysis,filtPar,trig,paths};
-                end
                 % get list of file dependencies (in main folder)
                 files = dir([pwd '/*.m']);
                 fd1 = cell(1,size(files,1));
@@ -166,10 +161,17 @@ function varargout = eeg_analysis(taskType,subjects,method,threshold)
                 fd = [fd1 fd2];
                 % create job object 
                 job = createJob(sched);
+                % add folder of current Job ID to resDir
+                paths.resDir = [paths.resDir 'Job' num2str(sched.Jobs(end).ID) '/'];
+                % create cell array of input argument for each task
+                inArgs = cell(1,size(subjects,2));
+                for iTask = 1:size(subjects,2)
+                    inArgs{iTask} = {taskType subjects(iTask),analysis,filtPar,trig,paths};
+                end
+
                 % set file dependencies 
                 set(job,'FileDependencies',fd);
                 task = createTask(job, @preprocess, 1 ,inArgs);
-
                 % add paths dependencies
                 pd = {paths.rawDir; paths.resDir; paths.behavDir; ...
                       paths.eeglabDir; paths.libDir; paths.elecSetup;...

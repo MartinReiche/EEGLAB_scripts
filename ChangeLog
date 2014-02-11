@@ -1,3 +1,20 @@
+2014-02-11  Martin Reiche  <reiche.stud@googlemail.com>
+
+	* func/preprocess.m: Job subfolder of results path gets deleted
+	after the last subject was preprocessed.
+
+	* func/eeg_rejection.m: Implemented new channel location path.
+
+	* func/save_erp.m: Implemented now channel location path.
+
+	* eeg_analysis.m: In parallel mode an additional subfolder
+	indicating the Job ID is now appended to the results path where
+	temopral data files are stored throughout the preprocessing.
+
+	* config.m: An additional path for the channel location file is
+	now included separately from the results path because this now
+	gets modified with an additional job subfolder in parallel mode.
+
 2014-02-10  Martin Reiche  <reiche.stud@googlemail.com>
 
 	* triggerlabels.m (triggerlabels): Added additional argument

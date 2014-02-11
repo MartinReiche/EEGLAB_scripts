@@ -242,11 +242,11 @@ for iTrig = 1:size(trig.triggers,1)
             paths.resFileSubSpec num2str(iSubj, '%0.2d')... 
             paths.resFileTrigSpec currTrig 'bad' '.set'],subjDir);
         % save chanlocs
-        if ~exist([paths.resDirAll 'chanlocs.mat'],'file')            
+        if ~exist([paths.chanlocs 'chanlocs.mat'],'file')            
             disp(' ');
             disp(':: Saving channel location information temporarily'); 
             chanlocs = EEG2.chanlocs;
-            save([paths.resDirAll 'chanlocs.mat'],'chanlocs');
+            save([paths.chanlocs 'chanlocs.mat'],'chanlocs');
             clear chanlocs;
         end
         

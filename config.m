@@ -453,7 +453,7 @@ switch lower(Method)
         error([':: Cluster configuration mismatch, could not configure ' ...
                'paths.']);
     end
-    
+    paths.chanlocs = paths.resDir;
     paths.rawDir = [paths.rawDir paths.taskLabel{taskType}];
     paths.behavDir = [paths.behavDir paths.taskLabel{taskType}];
     paths.topoDir = [paths.resDir paths.taskLabel{taskType} paths.topoDir];
