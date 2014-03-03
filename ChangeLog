@@ -1,3 +1,11 @@
+2014-03-03  Martin Reiche  <reiche.stud@googlemail.com>
+
+	* func/preprocess.m: paths are submitted to func/checkFile.m to
+	check whether which cluster mode is active.
+
+	* func/checkFile.m (checkFile): In remote cluster mode, script is
+	not paused if trigger timing exceedes expected value.
+
 2014-02-11  Martin Reiche  <reiche.stud@googlemail.com>
 
 	* func/preprocess.m: Job subfolder of results path gets deleted

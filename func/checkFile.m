@@ -1,4 +1,4 @@
-function [EEG, eventExcp] = checkFile(EEG,nSubj,iFile,stimPars,taskType,analysis,trig)
+function [EEG, eventExcp] = checkFile(EEG,nSubj,iFile,stimPars,taskType,analysis,trig,paths)
 % Check the currently loaded raw data file for sampling rate, triggercodes
 % and trigger latencies
 %
@@ -231,11 +231,12 @@ end
 % save missing and rejected events for output
 eventExcp.rej = rejCounter;
 eventExcp.miss = missCounter;
+
 if sum(eventExcp.rej) > trig.rejThresh.note
     disp(' ');
     disp([':: More than ' num2str(trig.rejThresh.note) ' Events have been rejected for Subject '...
           num2str(nSubj) ' Block ' num2str(iFile)]);
-    if trig.rejThresh.pause
+    if trig.rejThresh.pause && ~strcmp(paths.cluster,'remote')
         input(':: Press Ret to continue, C-c to abort.');
     end
 end

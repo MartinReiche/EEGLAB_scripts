@@ -40,7 +40,7 @@ function out = preprocess(taskType,iSubj,analysis,filtPar,trig,paths)
         % load raw data for current file and stimulation parameters
         [EEG, block,analysis, paths] = loadRawData(paths, iSubj,taskType,iFile,analysis,counter);
         % check parameters (sampling rate, triggers etc)
-        [EEG, eventExcp] = checkFile(EEG,iSubj,iFile,block,taskType,analysis,trig);
+        [EEG, eventExcp] = checkFile(EEG,iSubj,iFile,block,taskType,analysis,trig,paths);
         % Retriggering and systematically exclude events from analysis
         EEG = change_trig(EEG,analysis,trig,iFile,condOrder,taskType); 
         % bipolarize eye channels
