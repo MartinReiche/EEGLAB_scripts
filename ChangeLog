@@ -1,5 +1,8 @@
 2014-03-03  Martin Reiche  <reiche.stud@googlemail.com>
 
+	* eeg_analysis.m (eeg_analysis): Loading chanlocs from local
+	results folder.
+
 	* func/preprocess.m: paths are submitted to func/checkFile.m to
 	check whether which cluster mode is active.
 

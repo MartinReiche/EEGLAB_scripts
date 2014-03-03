@@ -256,12 +256,13 @@ function varargout = eeg_analysis(taskType,subjects,method,threshold)
                     % set raw and result Dir
                     paths.rawDirAll = paths.local.rawDir;
                     paths.resDirAll = paths.local.resDir;
+                    paths.chanlocs = paths.local.resDir;
                     % retrieve trigger parameters from processed data set
                     trig = subData.trig;
                     % retrieve filter parameters from processed data set
                     filtPar = subData.filtPar;
                     dur.Start = get(job,'StartTime');
-                    dur.End = get(job,'FinishTime');
+                    dur.End = get(job,'FinishTime');                    
                     save_erp(subErp,subErpEqual,subTrialInd,corrTrials,numEvent,rejEpoch,trialNum,subjects,paths,trig,dur,analysis,filtPar,rejLog,job);
                 else
                     disp(':: There are unfinished tasks for the current job');
