@@ -38,31 +38,46 @@ switch lower(method)
         end    
     end
 
+    % get rid of eye channels
+    iChan = 1;
+    while iChan <= size(channels2plot,2)
+        if strcmpi(chanlocs(channels2plot(iChan)).labels,'veog') || strcmpi(chanlocs(channels2plot(iChan)).labels,'heog')
+           channels2plot(iChan) = [ ];
+        else
+            iChan = iChan + 1;
+        end
+    end
     % get maxima for each curve on each channel
     for iChan = 1:size(channels2plot,2)
-        if ~strcmpi(chanlocs(channels2plot(iChan)).labels,'veog') && ~strcmpi(chanlocs(channels2plot(iChan)).labels,'heog')
-            for iWave = 1:numel(currInd)
-                erpMax(iChan,iWave) = max(squeeze(mean(erpAll(:,currInd(iWave),:,channels2plot(iChan)))));
-                erpMin(iChan,iWave) = min(squeeze(mean(erpAll(:,currInd(iWave),:,channels2plot(iChan)))));
-                for iWin = 1:size(plotPar.compWin,1)
-                    statWin = [round(((plotPar.compWin(iWin,1)+abs(plotPar.xScale(1)))*analysis.sampRate)/1000) ...
-                               round(((plotPar.compWin(iWin,2)+abs(plotPar.xScale(1)))*analysis.sampRate)/1000)];
-                    erpMean(iWin,iWave,iChan) = mean(mean(squeeze(erpAll(:,currInd(iWave),statWin,channels2plot(iChan))),2));
-                    erpErr(iWin,iWave,iChan) = std(mean(squeeze(erpAll(:,currInd(iWave),statWin,channels2plot(iChan))),2))/sqrt(size(erpAll,1));
-                end
+        for iWave = 1:numel(currInd)
+            erpMax(iChan,iWave) = max(squeeze(mean(erpAll(:,currInd(iWave),:,channels2plot(iChan)))));
+            erpMin(iChan,iWave) = min(squeeze(mean(erpAll(:,currInd(iWave),:,channels2plot(iChan)))));
+            for iWin = 1:size(plotPar.compWin,1)
+                statWin = [round(((plotPar.compWin(iWin,1)+abs(plotPar.xScale(1)))*analysis.sampRate)/1000) ...
+                           round(((plotPar.compWin(iWin,2)+abs(plotPar.xScale(1)))*analysis.sampRate)/1000)];
+
+                erpMean(iWin,iWave,iChan) = mean(mean(squeeze(erpAll(:,currInd(iWave),statWin,channels2plot(iChan))),2));
+                erpErr(iWin,iWave,iChan) = std(mean(squeeze(erpAll(:,currInd(iWave),statWin,channels2plot(iChan))),2))/sqrt(size(erpAll,1));
             end
         end
     end
 
-    % get maximal and minimal values (amplitude mean in time window plus SEM)
-    meanMaxValues = erpMean + erpErr;
-    meanMinValues = erpMean - erpErr;
-    
-    % assign output
-    maxVal.erpMax = ceil(max(max(erpMax)));
-    maxVal.erpMin = floor(min(min(erpMin)));
-    maxVal.meanMin = min(min(min(squeeze(meanMinValues))));
-    maxVal.meanMax = max(max(max(squeeze(meanMaxValues))));
+    if ~isempty(plotPar.compWin)
+        % get maximal and minimal values (amplitude mean in time window plus SEM)
+        meanMaxValues = erpMean + erpErr;
+        meanMinValues = erpMean - erpErr;
+        % assign output
+        maxVal.erpMax = ceil(max(max(erpMax)));
+        maxVal.erpMin = floor(min(min(erpMin)));
+        maxVal.meanMin = min(min(min(squeeze(meanMinValues))));
+        maxVal.meanMax = max(max(max(squeeze(meanMaxValues))));
+    else
+        % assign output
+        maxVal.erpMax = [ ];
+        maxVal.erpMin = [ ];
+        maxVal.meanMin = [ ];
+        maxVal.meanMax = [ ];
+    end
 
   case 'statistics'
     % initialize variables

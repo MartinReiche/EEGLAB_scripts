@@ -20,7 +20,7 @@
 function EEG = chanLoc(EEG,paths)
 
 % rename RM and LM to M2 and M1
-for iChan = 1:size(EEG.chanlocs,1)
+for iChan = 1:numel(EEG.chanlocs)
     % go through all channels
     if strcmp(EEG.chanlocs(iChan).labels,'LM')
         EEG.chanlocs(iChan).labels = 'M1';

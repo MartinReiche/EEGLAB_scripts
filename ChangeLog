@@ -1,5 +1,11 @@
 2014-04-07  Martin Reiche  <reiche.stud@googlemail.com>
 
+	* func/getMax.m: Standardized channel location access for data
+	with different raw file type.
+
+	* func/chanLoc.m: Standardized channel location access for data
+	with different raw file type.
+
 	* lib/subplotERP.m: Changed running statistics routines.
 
 	* func/plot_erp.m (plot_erp): Changed running statistics routines.
