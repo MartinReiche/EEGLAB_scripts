@@ -365,11 +365,21 @@ Perform one way repeated measures analysis of variance RMANOVA. Takes
 Data in matrix form where lines represent the subjects with the data of
 severeal factors represented by columns.
 -----------------------------------------------------------------------------
+lib/trendtest.m
+
+Perform within-subjects linear contrast analysis (linear trend test). Takes
+Data in matrix form where lines represent the subjects with the data of
+severeal factors represented by columns. Returns P-value for given data.
+-----------------------------------------------------------------------------
 /lib/fdr.m
 
 Takes vector of P-values and a given q-value and returns significance
 threshold based on false discovery rate. The q value is equal to the alpha
 value. Can be adjusted in config.m (see plotPar.alpha)
 -----------------------------------------------------------------------------
+/lib/drawSig.m
 
+Handles drawing of significant intervals in ERP plot. Can be called several
+times to draw different intervals with different given color consecutively.
+-----------------------------------------------------------------------------
 

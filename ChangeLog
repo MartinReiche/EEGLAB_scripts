@@ -1,5 +1,7 @@
 2014-04-07  Martin Reiche  <reiche.stud@googlemail.com>
 
+	* README: Added description of new functions and options.
+
 	* func/getMax.m: Standardized channel location access for data
 	with different raw file type.
 
