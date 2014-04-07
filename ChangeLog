@@ -1,3 +1,24 @@
+2014-04-07  Martin Reiche  <reiche.stud@googlemail.com>
+
+	* lib/subplotERP.m: Changed running statistics routines.
+
+	* func/plot_erp.m (plot_erp): Changed running statistics routines.
+
+	* config.m: Added linear trend test as option for running
+	point-wise statistics of ERPs.
+
+	* lib/runningStat.m: Implemented linear trend test.
+
+	* lib/drawSig.m: Marking of significant intervals is now handled
+	in this file. Significant intervals are now marked in
+	light red for p-values which are not corrected for multiple
+	comparisons and in dark red for tests which have been corrected
+	for multiple comparisons.
+
+	* lib/trendtest.m: Newly implemented within-subjects contrast
+	test. Added as option for running point-wise statistics to
+	operform a linear trend test of the submitted data.
+
 2014-03-03  Martin Reiche  <reiche.stud@googlemail.com>
 
 	* eeg_analysis.m (eeg_analysis): Loading chanlocs from local

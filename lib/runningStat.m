@@ -37,35 +37,44 @@ if (spData.plotPar.runStatWin(1) < spData.analysis.erpWin(1)) || (spData.plotPar
     disp([':: Statistics time range exceeds bounds of epoch. Testing whole epoch range']);
     spData.plotPar.runStatWin(1) = spData.analysis.erpWin(1);
     spData.plotPar.runStatWin(2) = spData.analysis.erpWin(2);
-elseif (spData.plotPar.runStatWin(1) > spData.analysis.erpWin(1)) || (spData.plotPar.runStatWin(2) < spData.analysis.erpWin(2))
-    disp(' ');
-    warning(':: NOT TESTING WHOLE EPOCH RANGE!');
-    disp(' ');
 end
-
 % get time resolution
 timeRes = 1000/spData.analysis.sampRate;
 % get relevant range for testing (in ms from beginning
 statRangeMS = [abs(spData.analysis.erpWin(1) - spData.plotPar.runStatWin(1))...
                abs(spData.analysis.erpWin(1) - spData.plotPar.runStatWin(2))];
-
 % convert ms timerange to datapoints
-statRange = [ceil(statRangeMS(1)/timeRes) floor(statRangeMS(2)/timeRes)];
+statRange = [ceil(statRangeMS(1)/timeRes) ceil(statRangeMS(2)/timeRes)];
 % convert zeros to one
 statRange(statRange == 0) = 1;
 % get relevant data
 statData = erpAll(:,spData.currInd,statRange(1):statRange(2),spData.channelIndex);
+
 % initialize array to store p values
 pVals = zeros(1,size(statData,3));    
 % Go through all the timepoints
 for iPoint = 1:size(statData,3)
     % perfrom one-way RMANOVA with the factor CONDITION (available waves per plot) 
-    pVals(iPoint) = OneWayrmAoV(statData(:,:,iPoint));
-    
+    switch lower(spData.plotPar.statTest)
+      case 'anova'
+        pVals(iPoint) = OneWayrmAoV(statData(:,:,iPoint));
+      case 'trendtest'
+        pVals(iPoint) = trendtest(statData(:,:,iPoint));
+      otherwise
+        error([':: There is no option calles ' statTest ' for running statistics.']);
+    end
 end    
+% get significant time points without correction for multiple comparisons
+sigInt.raw = find(pVals < spData.plotPar.alpha);
+if isempty(sigInt.raw)
+    sigInt.raw = [];
+end
+% perform false discovery rate correction for multiple comparisons and obtain
+% new significance level
 pID = fdr(pVals,spData.plotPar.alpha);
+% get significant time points with fdr correction
 if ~isempty(pID)
-    sigInt = find(pVals < pID);
+    sigInt.fdr = find(pVals < pID);
 else
-    sigInt = [];
+    sigInt.fdr = [];
 end

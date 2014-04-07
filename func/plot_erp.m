@@ -217,7 +217,8 @@ function plot_erp(erpAll,chanlocs,plotPar,trig,analysis,paths,taskType,restoredC
                 spData.analysis = analysis;
                 spData.paths = paths;
                 spData.taskType = taskType;
-                spData.sigInt = [];
+                spData.sigInt.raw = [];
+                spData.sigInt.fdr = [];
                 % assign UserData of current subplot
                 set(erpSpHandle,'UserData',spData);
                 set(erpSpHandle,'ButtonDownFcn',{@SubplotCallback,erpSpHandle});
@@ -252,7 +253,7 @@ function plot_erp(erpAll,chanlocs,plotPar,trig,analysis,paths,taskType,restoredC
             % conditions, plotting parameters etc.)
             topo.plotPar = plotPar;
             topo.analysis = analysis;
-            topo.paths = paths;
+            topo.paths = paths.local;
             topo.data = erpAll(:,currInd,:,:);
             topo.conds = plotConds{iCond};
             topo.chanlocs = chanlocs;
@@ -370,7 +371,6 @@ function plot_erp(erpAll,chanlocs,plotPar,trig,analysis,paths,taskType,restoredC
                         end
                         % create the subplot for the current channel
                         erpSpHandle = subplot(plotDim.nRow,plotDim.nCol,plotDim.curvePos(iPlot));
-                        
                         % prepare UserData for current subplot
                         spData.chanData = chanData;
                         spData.plotPar = plotPar;
@@ -384,11 +384,12 @@ function plot_erp(erpAll,chanlocs,plotPar,trig,analysis,paths,taskType,restoredC
                         if plotPar.runningStat
                             % running statistics (one way RMANOVA) over each time point
                             % in given range for current plot
-                            disp([':: Calculating statistics for plot ' ...
+                            disp([':: Calculating ' plotPar.statTest  ' for plot ' ...
                                   num2str(iPlot) ' in figure ' num2str(iFig)]);
                             sigInt = runningStat(erpAll,spData);
                         else
-                            sigInt = [];
+                            sigInt.raw = [];
+                            sigInt.fdr = [];
                         end
                         spData.sigInt = sigInt;
                         % plot the current channel

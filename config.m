@@ -173,6 +173,9 @@ function varargout = config(Method,varargin)
     % EEGLAB Dir
     paths.local.eeglabDir = '/local/path/to/eeglab/';
     paths.remote.eeglabDir = '/path/to/eeglab/on/cluster/';
+    % electrode stup file (specify only the file which is in the /lib folder
+    % without absolut path [with lib as the root path])
+    paths.elecSetup = 'elec_96ch.elp';
     % result file extension
     paths.resFileExt = '.set';
     % result subject folder prefix (names of result data subject folders)
@@ -294,6 +297,8 @@ function varargout = config(Method,varargin)
     plotPar.xScale = analysis.erpWin;
     % run point by point RMANOVA in each plot
     plotPar.runningStat = 1;
+    % define test type for running statistics ('anova' or 'trendtest')
+    plotPar.statTest = 'trendtest';
     % define alpha (q) level for fdr of running anova 
     plotPar.alpha = 0.5;
     % define time window for running statistics
@@ -345,6 +350,8 @@ function varargout = config(Method,varargin)
     % (1 - open extra figure which gets overridden every time a new subplot
     % is called, 2 - open a new figure for each call)
     plotPar.singleDispMode = 1;
+    % channels to exclude from topographies
+    plotPar.noTopoChan = {};
     % Conditions to plot, each line of the cell array represents one
     % figure, in each figure all the curves specified in one cell of
     % plotConds is plotted at a specified set of electrodes, the last
@@ -456,7 +463,7 @@ switch lower(Method)
     paths.chanlocs = paths.resDir;
     paths.rawDir = [paths.rawDir paths.taskLabel{taskType}];
     paths.behavDir = [paths.behavDir paths.taskLabel{taskType}];
-    paths.topoDir = [paths.resDir paths.taskLabel{taskType} paths.topoDir];
+    paths.local.topoDir = [paths.local.resDir paths.taskLabel{taskType} paths.topoDir];
     
     % add pre and post filter to rejFileLabel
     if ~filtPar.pre.enable

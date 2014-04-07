@@ -146,39 +146,16 @@ switch lower(method)
             
         end
     end
-    
-    % draw significant intervals
-    if plotPar.runningStat && ~isempty(sigInt)
-        % find start and end of significant intervals
-        foundStart = 0;
-        intCount = 0;
-        diffSig = [diff(sigInt) == 1 0];
-        for iInt = 1:size(diffSig,2)
-            if diffSig(1,iInt) && ~foundStart
-                % increase the interval counter
-                intCount = intCount + 1;
-                % save start of current interval
-                intBound(intCount,1) = sigInt(iInt);
-                foundStart = 1;
-            elseif ~diffSig(1,iInt) && foundStart
-               % save end of current interval
-               intBound(intCount,2) = sigInt(iInt);
-               foundStart = 0;
-            end
-        end
-        % draw significant intervalls
-        for iInt = 1:size(intBound,1)
 
-            % for each intervall
-            % determine start end end of current intervall in ms relative to epoch start
-            intStart = intBound(iInt,1) * timeRes + analysis.erpWin(1);
-            intDur = (intBound(iInt,2) * timeRes +  analysis.erpWin(1))-intStart;
-            % draw current intervall
-            rectangle('Position',[intStart plotPar.yScale(2)-plotPar.yCoef*0.1 intDur plotPar.yCoef*0.1],...
-                      'FaceColor',[1 0.5 0.5],'EdgeColor','none');
+    % determine which intervals to draw (intervall, color) 
+    drawInterval = {'sigInt.raw', '[1 0.8 0.8]';
+                    'sigInt.fdr','[1 0.3 0.3]'};
+    % draw significant intervals
+    if plotPar.runningStat
+        for iInterval = 1:size(drawInterval,2)
+            eval(['drawSig(' drawInterval{iInterval,1} ',plotPar,analysis,timeRes,' drawInterval{iInterval,2} ')']);
         end
     end
-
 
     % draw tones 
     if plotPar.drawStim 
@@ -248,16 +225,6 @@ switch lower(method)
         yScale(2) = plotPar.yScale(2);
     end
 
-    if plotPar.drawBaseLine && analysis.rmBase
-        % mark baseline
-        rectangle('Position',[plotPar.baseWin(1) plotPar.yScale(1)...
-                            plotPar.baseWin(2)-plotPar.baseWin(1)...
-                            plotPar.yScale(2)-plotPar.yScale(1)],'FaceColor',[0.9 ...
-                            0.9 0.9],'EdgeColor','none');
-        % plot baseline label
-        text(plotPar.baseWin(1)+10,plotPar.yScale(1)-0.15*plotPar.yCoef,'Baseline','FontSize',11);
-    end
-    
     % add component boxes
     for nComp = 1:size(plotPar.comps,1)
         if plotPar.compWin(nComp,2)-plotPar.compWin(nComp,1) > 0
@@ -271,37 +238,26 @@ switch lower(method)
         end
     end
     
+    % determine which intervals to draw (intervall, color) 
+    drawInterval = {'sigInt.raw', '[1 0.8 0.8]';
+                    'sigInt.fdr','[1 0.3 0.3]'};
     % draw significant intervals
-    if plotPar.runningStat && ~isempty(sigInt)
-        % find start and end of significant intervals
-        foundStart = 0;
-        intCount = 0;
-        diffSig = [diff(sigInt) == 1 0];
-        for iInt = 1:size(diffSig,2)
-            if diffSig(1,iInt) && ~foundStart
-                % increase the interval counter
-                intCount = intCount + 1;
-                % save start of current interval
-                intBound(intCount,1) = sigInt(iInt);
-                foundStart = 1;
-            elseif ~diffSig(1,iInt) && foundStart
-               % save end of current interval
-               intBound(intCount,2) = sigInt(iInt);
-               foundStart = 0;
-            end
-        end
-        % draw significant intervalls
-        for iInt = 1:size(intBound,1)
-
-            % for each intervall
-            % determine start end end of current intervall in ms relative to epoch start
-            intStart = intBound(iInt,1) * timeRes + analysis.erpWin(1);
-            intDur = (intBound(iInt,2) * timeRes +  analysis.erpWin(1))-intStart;
-            % draw current intervall
-            rectangle('Position',[intStart plotPar.yScale(2)-plotPar.yCoef*0.1 intDur plotPar.yCoef*0.1],...
-                      'FaceColor',[1 0.5 0.5],'EdgeColor','none');
+    if plotPar.runningStat
+        for iInterval = 1:size(drawInterval,2)
+            eval(['drawSig(' drawInterval{iInterval,1} ',plotPar,analysis,timeRes,' drawInterval{iInterval,2} ')']);
         end
     end
+    
+    if plotPar.drawBaseLine && analysis.rmBase
+        % mark baseline
+        rectangle('Position',[plotPar.baseWin(1) plotPar.yScale(1)...
+                            plotPar.baseWin(2)-plotPar.baseWin(1)...
+                            plotPar.yScale(2)-plotPar.yScale(1)],'FaceColor',[0.9 ...
+                            0.9 0.9],'EdgeColor','none');
+        % plot baseline label
+        text(plotPar.baseWin(1)+10,plotPar.yScale(1)-0.15*plotPar.yCoef,'Baseline','FontSize',11);
+    end
+
 
     % add name of the electrode to the current plot
     text(plotPar.xScale(1)+10,yScale(1)+0.45*plotPar.yCoef,plotPar.currChanLabel,'FontSize',16);
