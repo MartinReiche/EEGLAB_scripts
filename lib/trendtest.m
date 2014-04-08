@@ -1,6 +1,8 @@
 % Perform within-subjects linear contrast analysis (linear trend test). Takes
 % Data in matrix form where lines represent the subjects with the data of
-% severeal factors represented by columns. Returns P-value for given data.
+% severeal factors represented by columns. Returns P-value for given data
+% and a direction variable indicating whether the data is numerically
+% monotonically increasing [1] or decreasing [-1] or is not monotonic [0]
 % 
 % Copyright (c) 2014 Martin Reiche, Carl-von-Ossietzky-University Oldenburg
 % Author: Martin Reiche, martin.reiche@uni-oldnburg.de
@@ -8,7 +10,7 @@
 % This program is free software: you can redistribute it and/or modify
 % it under the terms of the GNU General Public License as published by
 % the Free Software Foundation, either version 3 of the License, or
-% (at your option) any later version.
+% (at your option) any later version. 
 
 % This program is distributed in the hope that it will be useful,
 % but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -18,7 +20,7 @@
 % You should have received a copy of the GNU General Public License
 % along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-function p = trendtest(data)
+function [p,r] = trendtest(data)
     
 % get number of levels
     nIV = size(data,2);
@@ -40,6 +42,7 @@ function p = trendtest(data)
     F = SSc/MSce;
     % obtain p-value from F distribution
     p = 1-fcdf(F,1,n-1);
+    % get correlation coefficient of data and model
+    r = corr(mean(data)',coef');
     
-
 

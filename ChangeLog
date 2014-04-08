@@ -1,5 +1,23 @@
 2014-04-08  Martin Reiche  <reiche.stud@googlemail.com>
 
+	* lib/trendtest.m: Implemented additional output argument holding
+	the correlation coefficient for the relationship of the mean data
+	and the model coefficients. Is later used to color-code the
+	significance bars.
+
+	* lib/subplotERP.m: Implemented changes for single subject ERP
+	plotting.
+
+	* lib/runningStat.m: Implemented changes for directional
+	color-coding of significance bars of point-wise statistics.
+
+	* lib/drawSig.m: Implemented changes for directional
+	color-coding of significance bars of point-wise statistics. If a
+	linear trend test is performed the color bars indicating a
+	significant trend are now color coded. Red if a positive
+	correlation of the mean data and the linear model is at hand and
+	blue if the correlation is negative.
+
 	* func/ssplot.m: Added. New function which allows to plot the
 	single subject ERPs of one stimulus type within one plot. Can be
 	called with a button labelled 'Single Subjects' in the single
@@ -7,7 +25,7 @@
 
 	* lib/getDisp.m: Replaced functions in order to work without
 	vec2mat which is only available in the Communication System
-	Toolbox. 
+	Toolbox.
 
 	* lib/distinct_color.m: Changed order of output colors in a more
 	plausible way.
@@ -19,7 +37,7 @@
 	plotting.
 
 	* README: Added description of new plot single subject ERP
-	function 
+	function.
 
 2014-04-07  Martin Reiche  <reiche.stud@googlemail.com>
 

@@ -52,6 +52,7 @@ statData = erpAll(:,spData.currInd,statRange(1):statRange(2),spData.channelIndex
 
 % initialize array to store p values
 pVals = zeros(1,size(statData,3));    
+r = pVals;
 % Go through all the timepoints
 for iPoint = 1:size(statData,3)
     % perfrom one-way RMANOVA with the factor CONDITION (available waves per plot) 
@@ -59,7 +60,8 @@ for iPoint = 1:size(statData,3)
       case 'anova'
         pVals(iPoint) = OneWayrmAoV(statData(:,:,iPoint));
       case 'trendtest'
-        pVals(iPoint) = trendtest(statData(:,:,iPoint));
+        [pVals(iPoint),r(iPoint)] = trendtest(statData(:,:,iPoint));
+        
       otherwise
         error([':: There is no option calles ' statTest ' for running statistics.']);
     end
@@ -78,3 +80,5 @@ if ~isempty(pID)
 else
     sigInt.fdr = [];
 end
+% save trend direction to output
+sigInt.r = r;

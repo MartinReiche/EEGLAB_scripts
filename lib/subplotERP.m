@@ -101,7 +101,7 @@ switch lower(method)
         % if not, add it
         xRange = [plotPar.xScale(1) xRange];
     end
-     
+    
     set(gca,'Xtick',xRange,'Ytick',plotPar.yScale(1):plotPar.yCoef:plotPar.yScale(2),...
             'YDir','reverse','box','off','FontSize',11);
     % add zero lines
@@ -147,14 +147,9 @@ switch lower(method)
         end
     end
 
-    % determine which intervals to draw (intervall, color) 
-    drawInterval = {'sigInt.raw', '[1 0.8 0.8]';
-                    'sigInt.fdr','[1 0.3 0.3]'};
     % draw significant intervals
     if plotPar.runningStat
-        for iInterval = 1:size(drawInterval,2)
-            eval(['drawSig(' drawInterval{iInterval,1} ',plotPar,analysis,timeRes,' drawInterval{iInterval,2} ')']);
-        end
+       drawSig(sigInt,plotPar,analysis,timeRes);
     end
 
     % draw tones 
@@ -238,13 +233,93 @@ switch lower(method)
         end
     end
     
-    % determine which intervals to draw (intervall, color) 
-    drawInterval = {'sigInt.raw', '[1 0.8 0.8]';
-                    'sigInt.fdr','[1 0.3 0.3]'};
     % draw significant intervals
-    if plotPar.runningStat
-        for iInterval = 1:size(drawInterval,2)
-            eval(['drawSig(' drawInterval{iInterval,1} ',plotPar,analysis,timeRes,' drawInterval{iInterval,2} ')']);
+    if any(strcmpi(varargin,'sig'))
+       drawSig(sigInt,plotPar,analysis,timeRes);
+    end
+    
+    if plotPar.drawBaseLine && analysis.rmBase
+        % mark baseline
+        rectangle('Position',[plotPar.baseWin(1) plotPar.yScale(1)...
+                            plotPar.baseWin(2)-plotPar.baseWin(1)...
+                            plotPar.yScale(2)-plotPar.yScale(1)],'FaceColor',[0.9 ...
+                            0.9 0.9],'EdgeColor','none');
+        % plot baseline label
+        text(plotPar.baseWin(1)+10,plotPar.yScale(1)-0.15*plotPar.yCoef,'Baseline','FontSize',11);
+    end
+
+
+    % add name of the electrode to the current plot
+    text(plotPar.xScale(1)+10,yScale(1)+0.45*plotPar.yCoef,plotPar.currChanLabel,'FontSize',16);
+    % add labels
+    xlabel('Latency (ms)');
+    ylabel(['Amplitude (microVolts)']);
+    % adjust Axes
+    axis([plotPar.xScale(1) plotPar.xScale(2) yScale(1) yScale(2)]);
+    % set the correct X and Y ticks and reverse ordinate
+    secondTick = ((ceil(plotPar.xScale(1)/plotPar.xCoef)-((plotPar.xScale(1)/plotPar.xCoef)))*plotPar.xCoef)+plotPar.xScale(1);
+    
+    % construct the x scale
+    xRange = [secondTick:plotPar.xCoef:plotPar.xScale(2)];
+    % check whether xRange adds up to the end of the spectra
+    if xRange(end) ~= plotPar.xScale(2) 
+        % if not, add it
+        xRange = [xRange plotPar.xScale(2)];
+    end
+    if xRange(1) ~= plotPar.xScale(1) 
+        % if not, add it
+        xRange = [plotPar.xScale(1) xRange];
+    end
+    
+    set(gca,'Xtick',xRange,'Ytick',plotPar.yScale(1):plotPar.yCoef:plotPar.yScale(2),...
+            'YDir','reverse','box','off','FontSize',11);
+    set(line(plotPar.xScale,[0 0]),'Color',[0 0 0],'LineStyle','-','linewidth',0.5);
+    set(line([0 0],yScale),'Color',[0 0 0],'LineStyle','-','linewidth',0.5);
+    % add grid
+    if plotPar.grid
+        grid on;
+    end
+    % start plotting
+
+    for iCurve = 1:size(chanData,2)
+        % plot current curve
+        plotHandle(iCurve) = plot(x,chanData(:,iCurve),'color',plotPar.currColor(iCurve,:),...
+                                  'LineWidth',plotPar.lineWidth,'LineStyle',plotPar.currStyle{iCurve});
+    end
+    hold off;
+      %% Plot single subject ERPs
+  case 'single subject'
+
+    hold on;
+    
+    % determine Y Axis scaling
+    if plotPar.singleScaleAuto 
+        yScale(1) = floor(min(min(chanData)));
+        yScale(2) = ceil(max(max(chanData)));
+    else
+        yScale(1) = plotPar.yScale(1);
+        yScale(2) = plotPar.yScale(2);
+    end
+
+    % add component boxes
+    if ~isempty(plotPar.compWin)
+        for nComp = 1:size(plotPar.comps,1)
+            if plotPar.compWin(nComp,2)-plotPar.compWin(nComp,1) > 0
+                % add marking of current component (window)
+                rectangle('Position',[plotPar.compWin(nComp,1) yScale(1)...
+                                    plotPar.compWin(nComp,2)-plotPar.compWin(nComp,1)...
+                                    yScale(2)-yScale(1)],'FaceColor',[0.8 0.8 0.8],'EdgeColor','none');
+                % add component name of current window
+                text(plotPar.compWin(nComp,1),yScale(1)-0.15*plotPar.yCoef,plotPar.comps{nComp},'FontSize',11);
+                
+            end
+        end
+    end
+    
+    % draw significant intervals
+    if any(strcmpi(varargin,'sig'))
+        if ~isempty(sigInt.raw)
+            drawSig(sigInt,plotPar,analysis,timeRes);
         end
     end
     
@@ -293,9 +368,10 @@ switch lower(method)
     for iCurve = 1:size(chanData,2)
         % plot current curve
         plotHandle(iCurve) = plot(x,chanData(:,iCurve),'color',plotPar.currColor(iCurve,:),...
-                                  'LineWidth',plotPar.lineWidth,'LineStyle',plotPar.currStyle{iCurve});
+                                  'LineWidth',plotPar.lineWidth);
     end
     hold off;
+    
   otherwise
     error([':: ' method ' is not a valid option for method']);
 end

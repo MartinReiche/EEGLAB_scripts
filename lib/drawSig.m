@@ -16,37 +16,53 @@
 % You should have received a copy of the GNU General Public License
 % along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-function drawSig(sigInt,plotPar,analysis,timeRes,color)
+function drawSig(sigInt,plotPar,analysis,timeRes)
 
-% draw significant intervals
-if ~isempty(sigInt)
-    % find start and end of significant intervals
-    foundStart = 0;
-    intCount = 0;
-    diffSig = [diff(sigInt) == 1 0];
-    for iInt = 1:size(diffSig,2)
-        if diffSig(1,iInt) && ~foundStart
-            % increase the interval counter
-            intCount = intCount + 1;
-            % save start of current interval
-            intBound(intCount,1) = sigInt(iInt);
-            foundStart = 1;
-        elseif ~diffSig(1,iInt) && foundStart
-            % save end of current interval
-            intBound(intCount,2) = sigInt(iInt);
-            foundStart = 0;
+allColor = {[1 0.8 0.8; 0.8 0.8 1];
+            [1 0.3 0.3; 0.3 0.3 1]};
+
+for iDraw = 1:2
+    
+    drawInt = zeros(1,size(sigInt.r,2));
+    drawInt(2,:) = sigInt.r;
+
+    % define color depending on loop iteration (light versions of the
+    % colors in first iteration for non corrected data and dark versions
+    % off the colors for the second iteration for multiple co mparison
+    % corrected data)
+    if iDraw == 1
+        drawInt(1,sigInt.raw) = 1;
+        color = allColor{1};
+    else
+        drawInt(1,sigInt.fdr) = 1;
+        color = allColor{2};
+    end
+    
+
+    % draw significant intervalls
+    switch lower(plotPar.statTest)
+      case 'anova'
+        for iInt = 1:size(drawInt,2)
+            if drawInt(1,iInt)
+                intStart = iInt * timeRes + analysis.erpWin(1);
+                % draw current intervall
+                rectangle('Position',[intStart plotPar.yScale(2)-plotPar.yCoef*0.1 timeRes plotPar.yCoef*0.1],...
+                          'FaceColor',color(1,:),'EdgeColor','none');
+            end
+        end
+      case 'trendtest'
+        for iInt = 1:size(drawInt,2)
+            if drawInt(1,iInt)
+                if drawInt(2,iInt) > 0
+                    col = color(1,:);
+                else
+                    col = color(2,:);
+                end
+                intStart = iInt * timeRes + analysis.erpWin(1);
+                % draw current intervall
+                rectangle('Position',[intStart plotPar.yScale(2)-plotPar.yCoef*0.1 timeRes plotPar.yCoef*0.1],...
+                          'FaceColor',col,'EdgeColor','none');
+            end
         end
     end
-    % draw significant intervalls
-    for iInt = 1:size(intBound,1)
-
-        % for each intervall
-        % determine start end end of current intervall in ms relative to epoch start
-        intStart = intBound(iInt,1) * timeRes + analysis.erpWin(1);
-        intDur = (intBound(iInt,2) * timeRes +  analysis.erpWin(1))-intStart;
-        % draw current intervall
-        rectangle('Position',[intStart plotPar.yScale(2)-plotPar.yCoef*0.1 intDur plotPar.yCoef*0.1],...
-                  'FaceColor',color,'EdgeColor','none');
-    end
 end
-
