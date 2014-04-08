@@ -20,15 +20,15 @@
 function singleERP(spData)
 
 % create subplot for ERP curve
-    if isempty(spData.plotPar.compWin)
+    if isempty(spData.plotPar.compWin) || strcmpi(spData.type,'elec_array')
         subplot(1,1,1)
     else
         subplot(2,1,1)
     end
-if spData.plotPar.singleScaleAuto
-    spData.plotPar.yScale(1) = floor(min(min(spData.chanData)));
-    spData.plotPar.yScale(2) = ceil(max(max(spData.chanData)));
-end
+    if spData.plotPar.singleScaleAuto
+        spData.plotPar.yScale(1) = floor(min(min(spData.chanData)));
+        spData.plotPar.yScale(2) = ceil(max(max(spData.chanData)));
+    end
     
 
 % plot clicked ERP
@@ -36,12 +36,30 @@ if spData.plotPar.singleGrid
     grid on;
 end
 
-subPlotHandle = subplotERP('single','channel data',spData.chanData,'sig',spData.sigInt,'plot par',spData.plotPar,'analysis',spData.analysis);
-h = legend(subPlotHandle,spData.labels{spData.currInd});
-set(h, 'Location', 'southwest');
+switch lower(spData.type)
+  case 'elec_array'
+    subPlotHandle = subplotERP('single subject','channel data',spData.chanData,'plot par',spData.plotPar,'analysis',spData.analysis);
+    % prepare legend labels
+  case 'singlesub'
 
+    subPlotHandle = subplotERP('single subject','channel data',spData.chanData,'sig',spData.sigInt,'plot par',spData.plotPar,'analysis',spData.analysis);
+    % prepare legend labels
+    legLabels = {};
+    for iSub = 1:numel(spData.analysis.subjects)
+        legLabels{iSub} = ['Subject ' num2str(spData.analysis.subjects(iSub))];
+    end
+    h = legend(subPlotHandle,legLabels);
+    set(h, 'Location', 'southwest');
+    
+    tH = title(spData.title); 
+    
+  case 'stats'
+    subPlotHandle = subplotERP('single','channel data',spData.chanData,'sig',spData.sigInt,'plot par',spData.plotPar,'analysis',spData.analysis);
+    h = legend(subPlotHandle,spData.labels{spData.currInd});
+    set(h, 'Location', 'southwest');
+end
 
-if ~isempty(spData.plotPar.compWin)
+if ~isempty(spData.plotPar.compWin) && strcmpi(spData.type,'stats')
     % create subplot for statistics
     subplot(2,1,2)
     
@@ -124,14 +142,23 @@ if ~isempty(spData.plotPar.compWin)
     set(gca,'XTickLabel',spData.plotPar.winNames);
     set(gca,'YLim',[(meanMin - spData.plotPar.yOverhead)  (meanMax + spData.plotPar.yOverhead)]);
     set(get(gca,'YLabel'),'String','Voltage (micro Volts)');
-
-    UIbtn = uicontrol(gcf,'Style', 'pushbutton', 'String', 'Save Data',...
-                      'Position', [10 10 100 40]);
-
-    % Assigning relevant data for UI UserData
-    set(UIbtn,'UserData',spData);
-    set(UIbtn,'Callback',{@saveRes,UIbtn});
 end
+
+if ~strcmpi(spData.type,'singlesub')
+    % SAVE BUTTON
+    UIbtn(1) = uicontrol(gcf,'Style', 'pushbutton', 'String', 'Save Data',...
+                         'Position', [10 10 100 40]);
+    % Assigning relevant data for UI UserData
+    set(UIbtn(1),'UserData',spData);
+    set(UIbtn(1),'Callback',{@saveRes,UIbtn(1)});
+    % SINGLE SUBJECT DATA BUTTON
+    UIbtn(2) = uicontrol(gcf,'Style', 'pushbutton', 'String', 'Single Subject',...
+                         'Position', [120 10 100 40]);
+    % Assigning relevant data for UI UserData
+    set(UIbtn(2),'UserData',spData);
+    set(UIbtn(2),'Callback',{@singleSubjectData,UIbtn(2)});
+end
+
 end
 
 function saveRes(src,evnt,UIbtn)
@@ -151,4 +178,12 @@ function saveRes(src,evnt,UIbtn)
     dlmwrite(fid,spData.resAll,'-append','delimiter','\t');
 
 end
+
+function singleSubjectData(src,evnt,UIbtn)
     
+% retrieve UserData
+    spData = get(UIbtn,'UserData');
+    % plot single subject data for each given trigger type 
+    ssplot(spData);
+    
+end

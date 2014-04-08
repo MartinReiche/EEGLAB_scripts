@@ -1,3 +1,26 @@
+2014-04-08  Martin Reiche  <reiche.stud@googlemail.com>
+
+	* func/ssplot.m: Added. New function which allows to plot the
+	single subject ERPs of one stimulus type within one plot. Can be
+	called with a button labelled 'Single Subjects' in the single
+	(clicked) ERP plots.
+
+	* lib/getDisp.m: Replaced functions in order to work without
+	vec2mat which is only available in the Communication System
+	Toolbox. 
+
+	* lib/distinct_color.m: Changed order of output colors in a more
+	plausible way.
+
+	* func/singleERP.m: Implemented changes for single subject ERP
+	plotting.
+
+	* func/plot_erp.m: Implemented changes for single subject ERP
+	plotting.
+
+	* README: Added description of new plot single subject ERP
+	function 
+
 2014-04-07  Martin Reiche  <reiche.stud@googlemail.com>
 
 	* README: Added description of new functions and options.

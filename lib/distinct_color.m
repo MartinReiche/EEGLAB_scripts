@@ -33,10 +33,11 @@ function [colorMatrix] = distinct_color(n)
 % initialize color matrix
 colorMatrix = zeros(n,3);
 % define hue values depending on n
-colorMatrix(:,1) = [0:1/n:1-1/n]';
+colorMatrix(:,1) = [1/n:1/n:1]';
+colorMatrix(colorMatrix == 1) = 0;
 % set saturation
 colorMatrix(:,2) = 1;
 % set value
-colorMatrix(:,3) = 0.9;
+colorMatrix(:,3) = 1;
 % convert to rgb
 colorMatrix = hsv2rgb(colorMatrix);

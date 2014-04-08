@@ -186,7 +186,8 @@ function plot_erp(erpAll,chanlocs,plotPar,trig,analysis,paths,taskType,restoredC
             for iChan = 1:size(channels2plot,2)
                 plotPar.currChan = iChan;
                 plotPar.currChanLabel = plotPar.plotChannels{iChan};
-                chanData = [];            
+                chanData = [];    
+                chanSingleData = [];
                 spData.resAll = [];
                 spData.resHead = {};
                 spData.erpMean = zeros(size(plotPar.compWin,1),size(currInd,2));
@@ -194,6 +195,7 @@ function plot_erp(erpAll,chanlocs,plotPar,trig,analysis,paths,taskType,restoredC
                 % get the data for the current condition and the current channel
                 for iCurve = 1:size(currInd,2)
                     chanData(:,iCurve) = squeeze(gavr(:,currInd(iCurve),:,channels2plot(iChan)));
+                    chanSingleData(:,iCurve,:,:) = erpAll(:,currInd(iCurve),:,channels2plot(iChan));
                     % Get Data for saving
                     for iWin = 1:size(plotPar.compWin,1)
                         % get the current window
@@ -211,6 +213,7 @@ function plot_erp(erpAll,chanlocs,plotPar,trig,analysis,paths,taskType,restoredC
                 erpSpHandle = subplot(plotDim.nRow,plotDim.nCol,plotDim.pos(iChan));
                 % prepare UserData for current subplot
                 spData.chanData = chanData;
+                spData.chanSingleData = chanSingleData;
                 spData.plotPar = plotPar;
                 spData.currInd = currInd;
                 spData.labels = labels;
@@ -219,6 +222,8 @@ function plot_erp(erpAll,chanlocs,plotPar,trig,analysis,paths,taskType,restoredC
                 spData.taskType = taskType;
                 spData.sigInt.raw = [];
                 spData.sigInt.fdr = [];
+                spData.sigInt.r = [];
+                spData.type = 'elec_array';
                 % assign UserData of current subplot
                 set(erpSpHandle,'UserData',spData);
                 set(erpSpHandle,'ButtonDownFcn',{@SubplotCallback,erpSpHandle});
@@ -365,14 +370,17 @@ function plot_erp(erpAll,chanlocs,plotPar,trig,analysis,paths,taskType,restoredC
                         % get the labels of the current plot
                         currLabels = plotConds{iPlot};
                         chanData = [];            
+                        chanSingleData = [];
                         % get the data for the current condition and the current channel
                         for iCurve = 1:size(currInd,2)
                             chanData(:,iCurve) = squeeze(gavr(:,currInd(iCurve),:,channels2plot(iChan)));
+                            chanSingleData(:,iCurve,:) = erpAll(:,currInd(iCurve),:,channels2plot(iChan));
                         end
                         % create the subplot for the current channel
                         erpSpHandle = subplot(plotDim.nRow,plotDim.nCol,plotDim.curvePos(iPlot));
                         % prepare UserData for current subplot
                         spData.chanData = chanData;
+                        spData.chanSingleData = chanSingleData;
                         spData.plotPar = plotPar;
                         spData.currInd = currInd;
                         spData.labels = labels;
@@ -380,6 +388,7 @@ function plot_erp(erpAll,chanlocs,plotPar,trig,analysis,paths,taskType,restoredC
                         spData.paths = paths;
                         spData.taskType = taskType;
                         spData.channelIndex = channels2plot(iChan);
+                        spData.type = 'stats';
 
                         if plotPar.runningStat
                             % running statistics (one way RMANOVA) over each time point
@@ -477,7 +486,7 @@ function plot_erp(erpAll,chanlocs,plotPar,trig,analysis,paths,taskType,restoredC
                             set(gca,'XTickLabel',plotPar.winNames);
                             set(gca,'YLim',[(maxVal.meanMin - plotPar.yOverhead)  (maxVal.meanMax + plotPar.yOverhead)]);
                             set(get(gca,'YLabel'),'String','Voltage (micro Volts)');
-                            set(statSpHandle,'ButtonDownFcn',{@SubplotCallback,erpSpHandle});
+                            set(statSpHandle,'ButtonDownFcn',{@SubplotCallback,statSpHandle});
                         
                             % add savebutton
                             UIsave = uicontrol(fh,'Style', 'pushbutton', 'String', 'Save Data',...
@@ -525,6 +534,7 @@ end
 function SubplotCallback(src,eventdata,erpSpHandle,fh)
 
     spData = get(erpSpHandle,'UserData');
+
     % evaluate display method
     switch spData.plotPar.singleDispMode
       case 1

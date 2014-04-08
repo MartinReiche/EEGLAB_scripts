@@ -59,7 +59,7 @@ switch lower(method)
         end
         % Determine grid arrangement depending on number of subjects
         dispPars.nCol = ceil(sqrt(numPlot));
-        dispPars.nRow = size(vec2mat(1:numPlot,dispPars.nCol),1);
+        dispPars.nRow = ceil(numPlot/dispPars.nCol);
         dispPars.legend = dispPars.nRow * dispPars.nCol;
         dispPars.pos = [1:numel(nPlot)];
     else

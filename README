@@ -18,7 +18,7 @@ ideas.
 Copyright (c) 2013 Martin Reiche, Carl-von-Ossietzky-University Oldenburg
 Author: Martin Reiche, martin.reiche@uni-oldnburg.de
 
-This program is free software: you can redistribute it and/or modify
+nnThis program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
 the Free Software Foundation, either version 3 of the License, or
 (at your option) any later version.
@@ -382,4 +382,11 @@ value. Can be adjusted in config.m (see plotPar.alpha)
 Handles drawing of significant intervals in ERP plot. Can be called several
 times to draw different intervals with different given color consecutively.
 -----------------------------------------------------------------------------
+/lib/ssplot.m
+
+This function takes subjects X trigger X sample data and plots
+one separate line for each subject in one plot per trigger type to
+plot single subject ERPs per trigger
+-----------------------------------------------------------------------------
+
 
