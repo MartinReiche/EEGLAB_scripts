@@ -1,5 +1,8 @@
 2014-04-15  Martin Reiche  <reiche.stud@googlemail.com>
 
+	* lib/runningStat.m: Does the statistics only if enough (more than
+	2) factor levels are available.
+
 	* func/ssplot.m (ssplot): Fixed a bug for overlapping legend and
 	erp plot.
 

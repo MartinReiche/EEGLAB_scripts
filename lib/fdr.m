@@ -1,5 +1,12 @@
 % Takes vector of P-values and a given q-value and returns significance
 % threshold based on false discovery rate
+%
+% FORMAT [pID,pN] = fdr(p,q)
+% 
+% p   - vector of p-values
+% q   - False Discovery Rate level
+%
+% pID - p-value threshold based on independen
 % 
 % Author: unknown
 
