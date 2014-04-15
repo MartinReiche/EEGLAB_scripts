@@ -295,6 +295,10 @@ function varargout = config(Method,varargin)
     plotPar.lineWidth = 1.5;
     % Time scaling
     plotPar.xScale = analysis.erpWin;
+    % amplitude scaling (auto scale if empty)
+    plotPar.yScale = [];
+    % amplitude scaling for bar diagram (auto scale if empty)
+    plotPar.yScaleBar = [];
     % run point by point RMANOVA in each plot
     plotPar.runningStat = 1;
     % define test type for running statistics ('anova' or 'trendtest')

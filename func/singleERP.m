@@ -134,8 +134,8 @@ if ~isempty(spData.plotPar.compWin) && strcmpi(spData.type,'stats')
         meanMin = min(meanMaxValues);
         meanMax = max(meanMaxValues);
     else
-        meanMin = spData.plotPar.yScaleMean(1);
-        meanMax = spData.plotPar.yScaleMean(2);
+        meanMin = spData.plotPar.yScaleBar(1);
+        meanMax = spData.plotPar.yScaleBar(2);
     end
 
     set(gca,'XTick',xTickPos);

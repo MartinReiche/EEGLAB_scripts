@@ -67,10 +67,28 @@ switch lower(method)
         meanMaxValues = erpMean + erpErr;
         meanMinValues = erpMean - erpErr;
         % assign output
-        maxVal.erpMax = ceil(max(max(erpMax)));
-        maxVal.erpMin = floor(min(min(erpMin)));
-        maxVal.meanMin = min(min(min(squeeze(meanMinValues))));
-        maxVal.meanMax = max(max(max(squeeze(meanMaxValues))));
+        if isempty(plotPar.yScale)
+            % if no default value is set in config
+            maxVal.erpMax = ceil(max(max(erpMax)));
+            maxVal.erpMin = floor(min(min(erpMin)));
+        else
+            % if default value is set in config
+            maxVal.erpMax = plotPar.yScale(2);
+            maxVal.erpMin = plotPar.yScale(1);
+        end
+        
+        if isempty(plotPar.yScaleBar)
+            % if no default value is set in config
+            maxVal.meanMin = min(min(min(squeeze(meanMinValues))));
+            maxVal.meanMax = max(max(max(squeeze(meanMaxValues))));
+            maxVal.yOverhead = plotPar.yOverhead;
+        else
+            % if default value is set in config
+            maxVal.meanMin = plotPar.yScaleBar(1);
+            maxVal.meanMax = plotPar.yScaleBar(2);
+            maxVal.yOverhead = 0;
+        end
+
     else
         % assign output
         maxVal.erpMax = [ ];
@@ -119,16 +137,32 @@ switch lower(method)
             meanMaxValues = [meanMaxValues erpMean(iWave) - erpErr(iWave)];
             meanMaxValues = [meanMaxValues erpMean(iWave) + erpErr(iWave)];
         end
-        % get minimal and maximal value for current figure
-        maxVal.meanMin = min(meanMaxValues);
-        maxVal.meanMax = max(meanMaxValues);
+        % get minimal and maximal value for current figure        
+        if isempty(plotPar.yScaleBar)
+            % if no default value is set in config
+            maxVal.meanMin = min(meanMaxValues);
+            maxVal.meanMax = max(meanMaxValues);
+            maxVal.yOverhead = plotPar.yOverhead;
+        else
+            % if default value is set in config
+            maxVal.meanMin = plotPar.yScaleBar(1);
+            maxVal.meanMax = plotPar.yScaleBar(2);
+            maxVal.yOverhead = 0;
+        end
     else
         maxVal.meanMin = [];
         maxVal.meanMax = [];
     end
     
-    maxVal.erpMin = min(erpMin);
-    maxVal.erpMax = max(erpMax);
+    if isempty(plotPar.yScale)
+        % if no default value is set in config
+        maxVal.erpMin = min(erpMin);
+        maxVal.erpMax = max(erpMax);
+    else
+        % if default value is set in config
+         maxVal.erpMin = plotPar.yScale(1);
+         maxVal.erpMax = plotPar.yScale(2);
+    end
   
   otherwise
     error([':: Invalid Option: ' method]);

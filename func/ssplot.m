@@ -22,7 +22,7 @@ function ssplot(spData)
 
 % switch auto dimensions for subplot structure on
     spData.plotPar.autoDim = 1;
-    dispPars = getDisp('electrode array','parameters',spData.plotPar,'structure',[1:size(spData.chanSingleData,2)]);
+    dispPars = getDisp('electrode array','parameters',spData.plotPar,'structure',[1:size(spData.chanSingleData,2)],'legend',1);
 
     % open new figure
     fh = figure;

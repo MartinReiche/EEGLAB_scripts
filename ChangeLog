@@ -1,3 +1,21 @@
+2014-04-15  Martin Reiche  <reiche.stud@googlemail.com>
+
+	* func/ssplot.m (ssplot): Fixed a bug for overlapping legend and
+	erp plot.
+
+	* func/singleERP.m (singleERP): Implemented changes for customizable
+	y-Axis scaling.
+
+	* func/plot_erp.m (SubplotCallback): Implemented changes for customizable
+	y-Axis scaling.
+
+	* func/getMax.m (getMax): Implemented changes for customizable
+	y-Axis scaling.
+
+	* config.m: Added Options to predefine limits of y-Axis for ERP
+	and Bar plots. Leaving them empty will fall back to the automatic
+	scaling function.
+
 2014-04-08  Martin Reiche  <reiche.stud@googlemail.com>
 
 	* lib/trendtest.m: Implemented additional output argument holding

@@ -180,8 +180,8 @@ function plot_erp(erpAll,chanlocs,plotPar,trig,analysis,paths,taskType,restoredC
             maxVal = getMax('electrode array',erpAll,analysis,plotPar,plotConds{iCond},labels,chanlocs,iChan,channels2plot);
             plotPar.yScale(1) = maxVal.erpMin;
             plotPar.yScale(2) = maxVal.erpMax;
-            plotPar.yScaleMean(1) = maxVal.meanMin;
-            plotPar.yScaleMean(2) = maxVal.meanMax;
+            plotPar.yScaleBar(1) = maxVal.meanMin;
+            plotPar.yScaleBar(2) = maxVal.meanMax;
 
             for iChan = 1:size(channels2plot,2)
                 plotPar.currChan = iChan;
@@ -322,13 +322,10 @@ function plot_erp(erpAll,chanlocs,plotPar,trig,analysis,paths,taskType,restoredC
                     maxVal = getMax('statistics',erpAll,analysis,plotPar,plotConds,labels,chanlocs,iChan,channels2plot);
                     plotPar.yScale(1) = maxVal.erpMin;
                     plotPar.yScale(2) = maxVal.erpMax;
-                    if ~isempty(plotPar.compWin)
-                        plotPar.yScaleMean(1) = maxVal.meanMin;
-                        plotPar.yScaleMean(2) = maxVal.meanMax;
-                    else
-                        plotPar.yScaleMean = [];
-                    end
-
+                    plotPar.yScaleBar(1) = maxVal.meanMin;
+                    plotPar.yScaleBar(2) = maxVal.meanMax;
+                    plotPar.yOverhead = maxVal.yOverhead;
+                    
                     % get subplot dimension parameters
                     plotDim = getDisp('statistics','structure',plotConds,'parameters',plotPar);
                     % initialize result matrix and headers for saving 
@@ -390,7 +387,7 @@ function plot_erp(erpAll,chanlocs,plotPar,trig,analysis,paths,taskType,restoredC
                         spData.channelIndex = channels2plot(iChan);
                         spData.type = 'stats';
 
-                        if plotPar.runningStat
+                        if plotPar.runningStat && size(chanData,2) > 1
                             % running statistics (one way RMANOVA) over each time point
                             % in given range for current plot
                             disp([':: Calculating ' plotPar.statTest  ' for plot ' ...
@@ -484,10 +481,11 @@ function plot_erp(erpAll,chanlocs,plotPar,trig,analysis,paths,taskType,restoredC
                             end
                             set(gca,'XTick',xTickPos);
                             set(gca,'XTickLabel',plotPar.winNames);
-                            set(gca,'YLim',[(maxVal.meanMin - plotPar.yOverhead)  (maxVal.meanMax + plotPar.yOverhead)]);
+                            set(gca,'YLim',[(plotPar.yScaleBar(1) - plotPar.yOverhead)  (plotPar.yScaleBar(2) + plotPar.yOverhead)]);
                             set(get(gca,'YLabel'),'String','Voltage (micro Volts)');
+                            set(statSpHandle,'UserData',spData);
                             set(statSpHandle,'ButtonDownFcn',{@SubplotCallback,statSpHandle});
-                        
+
                             % add savebutton
                             UIsave = uicontrol(fh,'Style', 'pushbutton', 'String', 'Save Data',...
                                                'Position', [5 10 100 40]);
@@ -499,6 +497,7 @@ function plot_erp(erpAll,chanlocs,plotPar,trig,analysis,paths,taskType,restoredC
                         % assign UserData of current subplot
                         set(erpSpHandle,'UserData',spData);
                         set(erpSpHandle,'ButtonDownFcn',{@SubplotCallback,erpSpHandle});
+                        
                     end % for iPlot
                     
                     if isempty(plotPar.compWin)
