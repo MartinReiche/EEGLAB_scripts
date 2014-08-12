@@ -317,7 +317,15 @@ function plot_erp(erpAll,chanlocs,plotPar,trig,analysis,paths,taskType,restoredC
                 end
                 
                 % only when there are waves to plot for the current task
-                if ~isempty(plotConds)        
+                if ~isempty(plotConds)
+                    
+                    % set original state for the y scaling on barplots
+                    if iFig == 1
+                        origyScaleBar = plotPar.yScaleBar;
+                    else
+                        plotPar.yScaleBar = origyScaleBar;
+                    end
+                    
                     % get minimal and maximal value for current figure
                     maxVal = getMax('statistics',erpAll,analysis,plotPar,plotConds,labels,chanlocs,iChan,channels2plot);
                     plotPar.yScale(1) = maxVal.erpMin;

@@ -1,3 +1,9 @@
+2014-08-12  Martin Reiche  <reiche.stud@googlemail.com>
+
+	* func/plot_erp.m: Auto scaling for bar diagrams in statistics
+	mode was not carried out for figures with indices higher than
+	one. This is now fixed.
+
 2014-04-15  Martin Reiche  <reiche.stud@googlemail.com>
 
 	* lib/runningStat.m: Does the statistics only if enough (more than

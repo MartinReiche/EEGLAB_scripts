@@ -129,7 +129,7 @@ switch lower(method)
             erpErr(iWin,iWave) = std(mean(squeeze(erpAll(:,currInd(iWave),statWin,channels2plot(statChan))),2))/sqrt(size(erpAll,1));
         end
     end 
-
+    
     if ~isempty(plotPar.compWin)
         % get maximal and minimal values (amplitude mean in time window plus SEM)
         meanMaxValues = [];
