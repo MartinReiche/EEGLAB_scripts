@@ -41,8 +41,11 @@ switch lower(spData.type)
     subPlotHandle = subplotERP('single subject','channel data',spData.chanData,'plot par',spData.plotPar,'analysis',spData.analysis);
     % prepare legend labels
   case 'singlesub'
-
-    subPlotHandle = subplotERP('single subject','channel data',spData.chanData,'sig',spData.sigInt,'plot par',spData.plotPar,'analysis',spData.analysis);
+    if spData.plotPar.runningStat
+        subPlotHandle = subplotERP('single subject','channel data',spData.chanData,'sig',spData.sigInt,'plot par',spData.plotPar,'analysis',spData.analysis);
+    else
+        subPlotHandle = subplotERP('single subject','channel data',spData.chanData,'plot par',spData.plotPar,'analysis',spData.analysis);
+    end
     % prepare legend labels
     legLabels = {};
     for iSub = 1:numel(spData.analysis.subjects)
@@ -54,7 +57,11 @@ switch lower(spData.type)
     tH = title(spData.title); 
     
   case 'stats'
-    subPlotHandle = subplotERP('single','channel data',spData.chanData,'sig',spData.sigInt,'plot par',spData.plotPar,'analysis',spData.analysis);
+    if spData.plotPar.runningStat
+        subPlotHandle = subplotERP('single','channel data',spData.chanData,'sig',spData.sigInt,'plot par',spData.plotPar,'analysis',spData.analysis);
+    else
+        subPlotHandle = subplotERP('single','channel data',spData.chanData,'plot par',spData.plotPar,'analysis',spData.analysis);
+    end
     h = legend(subPlotHandle,spData.labels{spData.currInd});
     set(h, 'Location', 'southwest');
 end

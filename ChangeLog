@@ -1,3 +1,19 @@
+2014-08-14  Martin Reiche  <reiche.stud@googlemail.com>
+
+	* config.m (config): Removed parameter analysis.singleDispMode
+	because it is no longer needed. 
+
+	* func/singleERP.m: Bugfix. Function tried to plot significant
+	intervals on y axis of ERP plots even though the feature was
+	turned off.
+
+	* func/plot_erp.m: Changed the opening behavior of clickable
+	subplots. Subplots now open in a single new figure when clicked
+	with the left mouse button. When another subplot is selected with
+	the left mouse, the figure will be overwritten by that
+	subplot. When clicked with the right mouse button, a new figure
+	will open for every clicked subplot.
+
 2014-08-12  Martin Reiche  <reiche.stud@googlemail.com>
 
 	* func/plot_erp.m: Auto scaling for bar diagrams in statistics

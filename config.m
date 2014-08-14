@@ -350,10 +350,6 @@ function varargout = config(Method,varargin)
     % figure will be used, 1: yes - boundaries will be determined depending
     % on single ERP data)
     plotPar.singleScaleAuto = 0;
-    % Control of behavior in which figure the called subplot will be shown
-    % (1 - open extra figure which gets overridden every time a new subplot
-    % is called, 2 - open a new figure for each call)
-    plotPar.singleDispMode = 1;
     % channels to exclude from topographies
     plotPar.noTopoChan = {};
     % Conditions to plot, each line of the cell array represents one

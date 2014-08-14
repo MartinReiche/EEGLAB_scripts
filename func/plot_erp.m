@@ -541,22 +541,21 @@ end
 function SubplotCallback(src,eventdata,erpSpHandle,fh)
 
     spData = get(erpSpHandle,'UserData');
+    parentFig = get(erpSpHandle,'parent');
 
     % evaluate display method
-    switch spData.plotPar.singleDispMode
-      case 1
+    switch lower(get(parentFig,'SelectionType'))
+      case 'normal'
         % open one more figure then scheduled by plot_erp and override this every
         % time SubplotCallback is called
         singleFig = figure(1000);
         set(singleFig,'name','Zoomed Figure');
         clf;
         set(gcf,'ButtonDownFcn',@closeFig,'Color',[0.8 0.8 0.8]);              
-      case 2
+      case 'alt'
         % open a new figure for each click
         figure
         set(gcf,'ButtonDownFcn',@closeFig,'Color',[0.8 0.8 0.8]);
-      otherwise
-        error([':: Invalid option for plotPar.singleDispMode: ' num2str(plotPar.singleDispMode)]);
     end
     
     % plot the clicked subplot in this new figure with statistics
@@ -726,7 +725,7 @@ end
 
 function closeFig(src,evnt)
 % Press Ctrl Click to close
-    if strcmp(get(gcf,'SelectionType'),'alt')
+    if strcmp(get(gcf,'SelectionType'),'extend')
     close(gcf); 
     else
         % disp(':: Ctrl-Click to close');
