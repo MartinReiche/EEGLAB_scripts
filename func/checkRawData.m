@@ -34,8 +34,8 @@ for iSubj = 1:size(dir([paths.rawDirAll paths.rawSubFolderPrefix '*']),1)
     % all the subject folders have the same subject specifier (e.g. vp) as given in 
     % the config (config.m)
     ind(iSubj).end = numel(paths.subDirs(iSubj).name);
-ind(iSubj).length = ind(iSubj).end - numel(paths.rawSubFolderPrefix);
-ind(iSubj).start = numel(paths.subDirs(iSubj).name) - (ind(iSubj).length - 1);
+    ind(iSubj).length = ind(iSubj).end - numel(paths.rawSubFolderPrefix);
+    ind(iSubj).start = numel(paths.subDirs(iSubj).name) - (ind(iSubj).length - 1);
 
 % find all subject numbers according to available folders
 paths.allSubjects(1, iSubj) = str2num(paths.subDirs(iSubj).name(ind(iSubj).start:ind(iSubj).end));  

@@ -7,20 +7,21 @@ function EEG = bipolarize(EEG,analysis)
 
 %% find eye channels
 disp(':: Replacing: HEOG = LO1-LO2, VEOG = SO1-IO1');
+disp(' ');
 % initialize channel numbers
 eyeChanNum = [];
 switch analysis.rawFormat
   case 'biosemi'
-    for iChan = 1:size(EEG.chanlocs,1)
-        for iEyeChan = 1:size(analysis.eyeChan,2)
+    for iChan = 1:numel(EEG.chanlocs)
+        for iEyeChan = 1:numel(analysis.eyeChan)
             if strcmp(EEG.chanlocs(iChan).labels,analysis.eyeChan{iEyeChan})
                 eyeChanNum(iEyeChan)=iChan;
             end
         end
     end
   case 'brainvision'
-    for iChan = 1:size(EEG.chanlocs,2)
-        for iEyeChan = 1:size(analysis.eyeChan,2)
+    for iChan = 1:numel(EEG.chanlocs)
+        for iEyeChan = 1:numel(analysis.eyeChan)
             if strcmp(EEG.chanlocs(iChan).labels,analysis.eyeChan{iEyeChan})
                 eyeChanNum(iEyeChan)=iChan;
             end

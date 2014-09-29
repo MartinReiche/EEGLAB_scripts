@@ -114,30 +114,54 @@ end
 
 %% Retrigger Omission (Hit vs Miss)
 if taskType == 2
-    omissionCount = 1;
-    error(':: REVISE THIS ROUTINE BEFORE USE');
-    for iTrig = 1:size(EEG.event,2)
-        
-        % if the EEG Event is an omission
-        if ismember(EEG.event(iTrig).type,analysis.omissionRange)
-            eventLat(omissionCount,1) = EEG.event(iTrig).latency;
-            eventLat(omissionCount,3) = iTrig;
-            omissionCount = omissionCount + 1;
+
+    % in position 1, 70 dB SPL:
+    % hit = 123 followed by 1
+    % miss = 123 followed by 2
+    % false alarm = 113 followed by 2
+    % correct rejection = 113 followed by 1
+
+    % in position 2, 70 dB SPL:
+    % hit = 124 followed by 1
+    % miss = 124 followed by 2
+    % false alarm = 114 followed by 2
+    % correct rejection = 114 followed by 1
+
+    for iEvent = 1:numel(EEG.event)
+        % go through all events
+        if ismember(EEG.event(iEvent).type,{'123', '113', '124', '114'})
+            foundResponse = 0;
+            iPostResponse = iEvent;
+            noiseTrig = EEG.event(iEvent).type;
+            
+            while ~foundResponse
+                % add one to increment variable
+                iPostResponse = iPostResponse + 1;
+                
+                if ismember(EEG.event(iPostResponse).type,{'1', '2', '3', '4'})
+                    foundResponse = 1;
+                    responseTrig = EEG.event(iPostResponse).type;
+                    % Retrigger noise stimuli according to response
+                    if responseTrig == '1' 
+                        if ismember(noiseTrig,{'123', '124'})
+                            % HIT
+                            EEG.event(iEvent).type = num2str(str2num(EEG.event(iEvent).type) + 1000);
+                        elseif ismember(noiseTrig,{'113', '114'})
+                            % CORRECT REJECTION
+                            EEG.event(iEvent).type = num2str(str2num(EEG.event(iEvent).type) + 2000);
+                        end
+                    elseif responseTrig == '2'
+                        if ismember(noiseTrig,{'123', '124'})
+                            % MISS
+                            EEG.event(iEvent).type = num2str(str2num(EEG.event(iEvent).type) + 3000);
+                        elseif ismember(noiseTrig,{'113', '114'})
+                            % FALSE ALARM
+                            EEG.event(iEvent).type = num2str(str2num(EEG.event(iEvent).type) + 4000);
+                        end
+                    end
+                end
+            end
         end
-        
-        if strcmp(EEG.event(iTrig).type,trig.respTrig) && omissionCount > 1
-            eventLat(end,2) = EEG.event(iTrig).latency;
-        end
-        
-    end
-    % compute latency between omission and response
-    eventLat(:,4) = (((eventLat(:,2) - eventLat(:,1))./analysis.sampRate).*1000);
-    % get incorrect trials
-    missTrials = eventLat(~(eventLat(:,4) > analysis.respWin(1)) & (eventLat(:,4) < analysis.respWin(2)),3);
-    
-    % Retrigger Trials with misses at omissions
-    for iTrig = 1:numel(missTrials)
-        EEG.event(missTrials(iTrig)).type = EEG.event(missTrials(iTrig)).type + 10;
     end
 end
 

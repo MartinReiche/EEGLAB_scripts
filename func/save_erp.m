@@ -233,15 +233,17 @@ for iSubj = 1:size(subjects,2)
     fprintf(rejFile,'%s\n','-------------------------------------------------------------------------------------------');
     fprintf(rejFile,'%s\n\n\n',['                          :: REJECTION LOG FILE OF SUBJECT ' num2str(subjects(iSubj), '%0.2d') ' ::']);
     
-    if ~isempty(rejLog(iSubj).exclVector)
+    if ~isempty(analysis.chanInterp)
         exclLabels = [];
         % get labels of excluded electrodes
-        for iChannel = rejLog(iSubj).exclVector
-            exclLabels = [exclLabels ' ' chanlocs(iChannel).labels];
+        for iLine = 1:size(analysis.chanInterp,1)
+            if analysis.chanInterp{iLine,1} == subjects(iSubj)
+                exclLabels = [exclLabels ' ' analysis.chanInterp{iLine,2}];
+            end
         end
-        fprintf(rejFile,'%s\n',['Rejection mode:               ' analysis.rejLabel{analysis.rejmode+1,:} ', excluding channels' exclLabels]);
+        fprintf(rejFile,'%s\n',['Rejection mode:               ' analysis.rejLabel{analysis.rejmode+1,:} ', interpolated channels: ' exclLabels]);
     else
-        fprintf(rejFile,'%s\n\n',['Rejection mode:               ' analysis.rejLabel{analysis.rejmode+1,:} ', including all channels']);
+        fprintf(rejFile,'%s\n\n',['Rejection mode:               ' analysis.rejLabel{analysis.rejmode+1,:} ', no channels interpolated']);
     end
 
     % add meta information of preprocessing to rejection log file header

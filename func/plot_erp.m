@@ -28,6 +28,12 @@ function plot_erp(erpAll,chanlocs,plotPar,trig,analysis,paths,taskType,restoredC
         analysis.erpWin = restoredConf.analysis(end).erpWin;
         analysis.baseWin = analysis.erpWin(1);
     end
+    % check rejection mode and force baseline correction on
+    if ismember(restoredConf.analysis.rejmode,[4 5]) && ~analysis.rmBase
+        % automatically enable baseline correction
+        analysis.rmBase = 1;
+    end
+
     
     % load current trigger parameters
     currTrigPars = config('triggers','task', taskType);
@@ -42,18 +48,9 @@ function plot_erp(erpAll,chanlocs,plotPar,trig,analysis,paths,taskType,restoredC
     % erpAll). Take trig.diffInd which should hold the erpAll Indices and
     % vertically concetenate it with the one above.
 
-    % if there are no difference waves
-    if isempty(trig.diffInd)
-        trig.trigLabels = {trig.trigLabels, (1:size(trig.trigLabels,1))'};
-        labels = trig.trigLabels{1};
-        indices = trig.trigLabels{2};
-        trig.color = trig.color;
-    else
-        trig.trigLabels = {trig.trigLabels, (1:size(trig.trigLabels,1))'};
-        labels = [trig.trigLabels{1};trig.diffInd(:,2)];
-        indices = [trig.trigLabels{2}; cell2mat(trig.diffInd(:,3))];
-        trig.color = [trig.color; trig.diffCol];
-    end
+    trig.trigLabels = {trig.trigLabels, (1:size(trig.trigLabels,1))'};
+    labels = trig.trigLabels{1};
+    indices = trig.trigLabels{2};
 
     %% get the line style of the curves from current config file
     plotPar.style = {};
@@ -89,7 +86,12 @@ function plot_erp(erpAll,chanlocs,plotPar,trig,analysis,paths,taskType,restoredC
     % compute grand average ERPs
     disp(':: Compute grand average ERPs');
     gavr = mean(erpAll,1);
-
+    % compute global field power
+    if analysis.gfp
+        disp(':: Compute Global Field Power');
+        gfp = calc_gfp(erpAll,chanlocs);
+    end
+    
     % check validity of component windows
     if ~isempty(plotPar.compWin)
         for nComp = size(plotPar.compWin,1):-1:1
@@ -130,10 +132,8 @@ function plot_erp(erpAll,chanlocs,plotPar,trig,analysis,paths,taskType,restoredC
 
         % get colors
         if plotPar.autoColor
-            % plotColor = distinguishable_colors(size(plotConds{iCond},2));
             plotColor = distinct_color(size(plotConds{iCond},plotPar.plotCondsCol));
         else
-            % plotColor = distinguishable_colors(max(trig.color(:,2)));
             plotColor = distinct_color(max(trig.color(:,plotPar.plotCondsCol)));
         end
         % get the subplot parameters (dimensions and iterators)
@@ -281,18 +281,28 @@ function plot_erp(erpAll,chanlocs,plotPar,trig,analysis,paths,taskType,restoredC
         %% Plot curves at stats channel with histograms and extract data
         % get position of channels for plotting
         channels2plot = zeros(1,size(plotPar.plotChannelsStat,1));
-        for nChannel = 1:size(plotPar.plotChannelsStat,1) 
-            for n=1:numel(chanlocs)
-                if strcmp(chanlocs(n).labels,plotPar.plotChannelsStat(nChannel,:))
-                    channels2plot(nChannel) = n;
+        if ~analysis.gfp
+            for nChannel = 1:size(plotPar.plotChannelsStat,1) 
+                for n=1:numel(chanlocs)
+                    if strcmp(chanlocs(n).labels,plotPar.plotChannelsStat(nChannel,:))
+                        channels2plot(nChannel) = n;
+                    end
                 end
             end
+        else
+            channels2plot = 1;
         end
-        
+            
         % for each specified stats channel
         for iChan = 1:size(channels2plot,2)
+            
             plotPar.currChan = iChan;
-            plotPar.currChanLabel = plotPar.plotChannelsStat{iChan};
+            if analysis.gfp
+                plotPar.currChanLabel = '';
+            else
+                plotPar.currChanLabel = plotPar.plotChannelsStat{iChan};
+            end
+
             for iFig = 1:size(plotPar.plotCondsStat,2)
                 fh = figure('WindowButtonDownFcn',@closeFig);
                 plotPar.figInd.curr = iFig;
@@ -301,10 +311,8 @@ function plot_erp(erpAll,chanlocs,plotPar,trig,analysis,paths,taskType,restoredC
                 plotConds = {};
                 % get colors
                 if plotPar.autoColor
-                    % plotColor = distinguishable_colors(max(max(cellfun(@length,plotPar.plotCondsStat)))); 
                     plotColor = distinct_color(max(max(cellfun(@length,plotPar.plotCondsStat)))); 
                 else
-                    % plotColor = distinguishable_colors(max(trig.color(:,plotPar.plotCondsStatCol(iFig))));
                     plotColor = distinct_color(max(trig.color(:,plotPar.plotCondsStatCol(iFig))));
                 end
                 for iPlot = 1:size(plotPar.plotCondsStat,1)
@@ -327,13 +335,18 @@ function plot_erp(erpAll,chanlocs,plotPar,trig,analysis,paths,taskType,restoredC
                     end
                     
                     % get minimal and maximal value for current figure
-                    maxVal = getMax('statistics',erpAll,analysis,plotPar,plotConds,labels,chanlocs,iChan,channels2plot);
+                    if analysis.gfp
+                        maxVal = getMax('gfp',gfp,analysis,plotPar,plotConds,labels,chanlocs,iChan,channels2plot);
+                    else
+                        maxVal = getMax('statistics',erpAll,analysis,plotPar,plotConds,labels,chanlocs,iChan,channels2plot);
+                    end
+                    
                     plotPar.yScale(1) = maxVal.erpMin;
                     plotPar.yScale(2) = maxVal.erpMax;
                     plotPar.yScaleBar(1) = maxVal.meanMin;
                     plotPar.yScaleBar(2) = maxVal.meanMax;
                     plotPar.yOverhead = maxVal.yOverhead;
-                    
+
                     % get subplot dimension parameters
                     plotDim = getDisp('statistics','structure',plotConds,'parameters',plotPar);
                     % initialize result matrix and headers for saving 
@@ -348,13 +361,14 @@ function plot_erp(erpAll,chanlocs,plotPar,trig,analysis,paths,taskType,restoredC
                         spData.resAll = [];
                         spData.resHead = {};
                         % get the data to plot 
+
                         for iCurve = 1:size(plotConds{iPlot},2) 
                             % go through each Curve of the current figure
                             foundLabel = 0;
                             for iIndex = 1:size(labels,1)
                                 % check current curve label against each label of the
                                 % curves stored in erpAll to get the index of the current
-                                % curve label 
+                                % curve label
                                 if strcmp(plotConds{iPlot}(iCurve),labels(iIndex))
                                     foundLabel = 1;
                                     currInd = [currInd iIndex];
@@ -378,9 +392,21 @@ function plot_erp(erpAll,chanlocs,plotPar,trig,analysis,paths,taskType,restoredC
                         chanSingleData = [];
                         % get the data for the current condition and the current channel
                         for iCurve = 1:size(currInd,2)
-                            chanData(:,iCurve) = squeeze(gavr(:,currInd(iCurve),:,channels2plot(iChan)));
-                            chanSingleData(:,iCurve,:) = erpAll(:,currInd(iCurve),:,channels2plot(iChan));
+                            if analysis.gfp
+                                chanSingleData(:,iCurve,:) = gfp(:,currInd(iCurve),:);
+                            else
+                                chanSingleData(:,iCurve,:) = erpAll(:,currInd(iCurve),:,channels2plot(iChan));
+                            end
                         end
+
+                        for iCurve = 1:size(currInd,2)
+                            if analysis.gfp
+                                chanData(:,iCurve) = squeeze(mean(gfp(:,currInd(iCurve),:)));
+                            else
+                                chanData(:,iCurve) = squeeze(gavr(:,currInd(iCurve),:,channels2plot(iChan)));
+                            end
+                        end
+
                         % create the subplot for the current channel
                         erpSpHandle = subplot(plotDim.nRow,plotDim.nCol,plotDim.curvePos(iPlot));
                         % prepare UserData for current subplot
@@ -427,11 +453,18 @@ function plot_erp(erpAll,chanlocs,plotPar,trig,analysis,paths,taskType,restoredC
                                 
                                 % get data for each wave
                                 for iWave = 1:size(chanData,2)
-                                    erpMean(iWin,iWave) = mean(mean(squeeze(erpAll(:,currInd(iWave),statWin(1):statWin(2),channels2plot(iChan))),2));
-                                    erpErr(iWin,iWave) = std(mean(squeeze(erpAll(:,currInd(iWave),statWin(1):statWin(2),channels2plot(iChan))),2))/sqrt(size(erpAll,1));
+                                    if ~analysis.gfp
+                                        erpMean(iWin,iWave) = mean(mean(squeeze(erpAll(:,currInd(iWave),statWin(1):statWin(2),channels2plot(iChan))),2));
+                                        erpErr(iWin,iWave) = std(mean(squeeze(erpAll(:,currInd(iWave),statWin(1):statWin(2),channels2plot(iChan))),2))/sqrt(size(erpAll,1));
+                                        spData.resAll = [spData.resAll mean(squeeze(erpAll(:,currInd(iWave),statWin(1):statWin(2),channels2plot(iChan))),2)];
+                                        spData.resAllParent = [spData.resAllParent mean(squeeze(erpAll(:,currInd(iWave),statWin(1):statWin(2),channels2plot(iChan))),2)];                                
+                                    else
+                                        erpMean(iWin,iWave) = mean(squeeze(mean(gfp(:,currInd(iWave),statWin(1):statWin(2)))));
+                                        erpErr(iWin,iWave) = std(mean(squeeze(gfp(:,currInd(iWave),statWin(1):statWin(2))),2))/sqrt(size(gfp,1));
+                                        spData.resAll = [spData.resAll mean(squeeze(gfp(:,currInd(iWave),statWin(1):statWin(2))),2)];
+                                        spData.resAllParent = [spData.resAllParent mean(squeeze(gfp(:,currInd(iWave),statWin(1):statWin(2))),2)];
+                                    end
                                     % Save Data in results matrix columns resemble conditions 
-                                    spData.resAll = [spData.resAll mean(squeeze(erpAll(:,currInd(iWave),statWin(1):statWin(2),channels2plot(iChan))),2)];
-                                    spData.resAllParent = [spData.resAllParent mean(squeeze(erpAll(:,currInd(iWave),statWin(1):statWin(2),channels2plot(iChan))),2)];                                
                                     % write header for current column
                                     spData.resHead = [spData.resHead [char(plotPar.plotCondsStat{iPlot,iFig}(iWave)) 'Win' num2str(iWin)]];
                                     spData.resHeadParent = [spData.resHeadParent [char(plotPar.plotCondsStat{iPlot,iFig}(iWave)) 'Win' num2str(iWin)]];
@@ -490,7 +523,11 @@ function plot_erp(erpAll,chanlocs,plotPar,trig,analysis,paths,taskType,restoredC
                             set(gca,'XTick',xTickPos);
                             set(gca,'XTickLabel',plotPar.winNames);
                             set(gca,'YLim',[(plotPar.yScaleBar(1) - plotPar.yOverhead)  (plotPar.yScaleBar(2) + plotPar.yOverhead)]);
-                            set(get(gca,'YLabel'),'String','Voltage (micro Volts)');
+                            if analysis.gfp
+                                set(get(gca,'YLabel'),'String','Global Field Power');
+                            else
+                                set(get(gca,'YLabel'),'String','Mean Amplitude (micro Volts)');
+                            end
                             set(statSpHandle,'UserData',spData);
                             set(statSpHandle,'ButtonDownFcn',{@SubplotCallback,statSpHandle});
 

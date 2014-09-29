@@ -29,18 +29,18 @@ function out = preprocess(taskType,iSubj,analysis,filtPar,trig,paths)
     % (lines represent blocks, colums 1-20 are triggers 101-512)
     eventCount = zeros(size(trig.triggers,1),analysis.nBlocks);
     % prepare result folder for subject
-    paths = prepSubDir(paths,iSubj);
+    paths = prepSubDir(analysis,paths,iSubj);
 
     % get condition order
-    condOrder = preporder(iSubj,taskType,0,paths);
+    condOrder = preporder(iSubj);
     counter = 0;
-        
+    
     for iFile = 1:analysis.nBlocks
         counter = counter + 1;
         % load raw data for current file and stimulation parameters
-        [EEG, block,analysis, paths] = loadRawData(paths, iSubj,taskType,iFile,analysis,counter);
+        [EEG, analysis, paths] = loadRawData(paths, iSubj,taskType,iFile,analysis,counter);
         % check parameters (sampling rate, triggers etc)
-        [EEG, eventExcp] = checkFile(EEG,iSubj,iFile,block,taskType,analysis,trig,paths);
+        EEG = checkFileBasic(EEG,iSubj,iFile,taskType,analysis,trig,paths,condOrder);
         % Retriggering and systematically exclude events from analysis
         EEG = change_trig(EEG,analysis,trig,iFile,condOrder,taskType); 
         % bipolarize eye channels
@@ -61,7 +61,7 @@ function out = preprocess(taskType,iSubj,analysis,filtPar,trig,paths)
             eventCount = segmentation(EEG,trig,analysis,paths,eventCount, ...
                                       iFile,iSubj,condOrder);
             % eye correction
-          case 2
+          case {2,5}
             % filter Data
             filtPar.eye = 1; % before eye correction
             EEG = fir_filter(EEG,analysis,filtPar);
@@ -77,11 +77,11 @@ function out = preprocess(taskType,iSubj,analysis,filtPar,trig,paths)
     
     switch analysis.rejmode
         % no eye correction
-      case {0,1,3}
+      case {0,1,3,4}
         % merge files of same trigger for current subject and save
         merge_data(iSubj,paths,trig,eventCount,condOrder);
         % eye correction
-      case 2
+      case {2,5}
         % merge all files for current subject, perform eye correction, apply post
         % filter and save
         merge_all(iSubj,paths,filtPar,analysis);
@@ -114,4 +114,4 @@ function out = preprocess(taskType,iSubj,analysis,filtPar,trig,paths)
     
     % clear unused variables
     clear analysis filtPar trig paths eventCount condOrder;
-        
+

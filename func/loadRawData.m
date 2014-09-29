@@ -1,4 +1,4 @@
-function [EEG ,block, analysis, paths] = loadRawData(paths,nSubj,nSession,iFile,analysis,counter)
+function [EEG, analysis, paths] = loadRawData(paths,nSubj,nSession,iFile,analysis,counter)
 % script to load raw EEG data file using EEGLAB. Currently loads BIOSIG and
 % Brainvision Recorder raw files. Needs to be adjusted for other raw data
 % types.
@@ -16,8 +16,15 @@ function [EEG ,block, analysis, paths] = loadRawData(paths,nSubj,nSession,iFile,
         else
             rawFileOrder = 1:size(paths.allFiles,1);
     end
-    rawFile = [paths.rawDir paths.allFiles(rawFileOrder(iFile)).name];
-
+    rawFile = [paths.rawDir paths.allFiles{rawFileOrder(iFile)}];
+    
+    % last check if file exists
+    currentFile = dir(rawFile);
+    if isempty(currentFile)
+        error([':: File ' rawFile ' dows not exist!']);
+    end
+    clear curentFile;
+    
     %% get channel number of nose for current subject
     % if iFile == 1
     
@@ -35,8 +42,9 @@ function [EEG ,block, analysis, paths] = loadRawData(paths,nSubj,nSession,iFile,
             end
         end
         if foundRef
+            disp(' ');
             disp([':: Found Reference (' analysis.refChan ') at channel ' ...
-                  iChan ' for subject ' num2str(nSubj,'%0.2d')]);
+                  num2str(iChan) ' for subject ' num2str(nSubj,'%0.2d')]);
         else
             error([':: Did not find Reference (' analysis.refChan ') for subject ' ...
                    num2str(nSubj,'%0.2d')]);
@@ -47,7 +55,7 @@ function [EEG ,block, analysis, paths] = loadRawData(paths,nSubj,nSession,iFile,
     disp(' ');
     disp('############################################');
     disp(' ');
-    disp([':: Loading raw data of Subject ' num2str(nSubj,'%0.2d') ' Block ' num2str(iFile,'%0.2d')]);
+    disp([':: Loading raw data of Subject ' num2str(nSubj,'%0.2d') ' Block ' num2str(analysis.blocks(iFile),'%0.2d')]);
     disp(' ');
     disp('############################################');
     disp(' ');
@@ -59,7 +67,7 @@ function [EEG ,block, analysis, paths] = loadRawData(paths,nSubj,nSession,iFile,
         EEG = pop_biosig(rawFile,'ref',analysis.refChanNum);
       case 'brainvision'
         % brainvision analyzer files
-        EEG = pop_loadbv(paths.rawDir,paths.allFiles(rawFileOrder(iFile)).name, [], []);
+        EEG = pop_loadbv(paths.rawDir,paths.allFiles{rawFileOrder(iFile)}, [], []);
     end
 
     % check if reference channel number is right
@@ -69,7 +77,9 @@ function [EEG ,block, analysis, paths] = loadRawData(paths,nSubj,nSession,iFile,
                    EEG.chanlocs(1).ref]);
         else
             % remove reference channel
+            disp(' ');
             disp(':: Removing reference channel');
+            disp(' ');
             EEG = pop_select(EEG,'nochannel',analysis.refChanNum);
         end
     end
@@ -99,12 +109,12 @@ function [EEG ,block, analysis, paths] = loadRawData(paths,nSubj,nSession,iFile,
                num2str(nSubj,'%0.2d')]);
     end
 
-    % go through the chaninterp array
-    % load corresponding stimulation parameter file
-    load([...
-        paths.behavDir...
-        paths.behavSubjSpec num2str(nSubj,'%0.2d')...
-        paths.behavBlockSpec num2str(iFile,'%0.2d')...
-        paths.behavFileExt]);
+    % % go through the chaninterp array
+    % % load corresponding stimulation parameter file
+    % load([...
+    %     paths.behavDir...
+    %     paths.behavSubjSpec num2str(nSubj,'%0.2d')...
+    %     paths.behavBlockSpec num2str(iFile,'%0.2d')...
+    %     paths.behavFileExt]);
 
 end

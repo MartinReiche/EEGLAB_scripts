@@ -23,7 +23,7 @@ function [EEG] = fir_filter(EEG,analysis,filtPar)
         switch filtPar.eye
           case 0 % no eye correction
             % filter the data
-            disp(' ' );disp([':: Apply ' filtPar.name]);disp(' ');
+            disp([':: Apply ' filtPar.name]);disp(' ');
             [EEG,com,b] = pop_firws(EEG,'ftype',filtPar.fType,'fcutoff',filtPar.pass, ...
                                     'forder',filtPar.fOrder, 'wtype',filtPar.wType, ...
                                     'warg',filtPar.kaiserBeta);
@@ -31,7 +31,7 @@ function [EEG] = fir_filter(EEG,analysis,filtPar)
             
           case 1 % before eye correction
             if filtPar.pre.enable
-                disp(' ');disp([':: Apply ' filtPar.pre.name ' (PRE-FILTER)']);disp(' ');
+                disp([':: Apply ' filtPar.pre.name ' (PRE-FILTER)']);disp(' ');
                 [EEG,com,b] = pop_firws(EEG,'ftype',filtPar.pre.fType,'fcutoff',filtPar.pre.pass, ...
                                         'forder',filtPar.pre.fOrder, 'wtype',filtPar.pre.wType, ...
                                         'warg',filtPar.pre.kaiserBeta);
@@ -42,7 +42,7 @@ function [EEG] = fir_filter(EEG,analysis,filtPar)
             end
           case 2 % after eye correction
             if filtPar.post.enable
-            disp(' ');disp([':: Apply ' filtPar.post.name ' (POST-FILTER)']);disp(' ');
+            disp([':: Apply ' filtPar.post.name ' (POST-FILTER)']);disp(' ');
             [EEG,com,b] = pop_firws(EEG,'ftype',filtPar.post.fType,'fcutoff',filtPar.post.pass, ...
                                     'forder',filtPar.post.fOrder, 'wtype',filtPar.post.wType, ...
                                     'warg',filtPar.post.kaiserBeta);
@@ -52,7 +52,7 @@ function [EEG] = fir_filter(EEG,analysis,filtPar)
                 disp(' ');
             end
           otherwise
-            error([':: Invalid Option ' num2str(analysis.rejmode) ' for filtPar.eyeRej']);
+            error([':: Invalid Option ' num2str(filtPar.eye) ' for filtPar.eyeRej']);
         end
         
     else

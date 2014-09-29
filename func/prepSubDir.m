@@ -17,7 +17,7 @@
 % You should have received a copy of the GNU General Public License
 % along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-function paths = prepSubDir(paths,iSubj)
+function paths = prepSubDir(analysis,paths,iSubj)
 
 foundDir = 0;
 for iDir = 1:size(paths.subDirs,1)
@@ -34,8 +34,14 @@ end
 % change results and raw paths according to subject
 paths.rawDir = [paths.rawDirAll paths.subDirs(subDirInd).name '/'];
 paths.resDir = [paths.resDirAll paths.subDirs(subDirInd).name '/'];
-% Get all file names of current subject
-paths.allFiles = dir([paths.rawDir '*' paths.rawFileExt]);
+
+% construct file names fpr current subject
+paths.allFiles = cell(numel(analysis.blocks),1);
+for iFile = 1:numel(analysis.blocks)
+    paths.allFiles{iFile} = [paths.rawSubFilePrefix num2str(iSubj,'%0.2d')...
+                             paths.rawFileBlockSpec num2str(analysis.blocks(iFile),'%0.2d')... 
+                             paths.rawFileExt];
+end
 
 % check for old epoch files extracted from separate blocks and delete them
 if size(dir([paths.resDir ...

@@ -43,6 +43,15 @@ trig.delete = {'boundary'};
 % (hypothesis driven) / are already marked as excluded by the stimulation
 % scripts 
 trig.exclBefore = {'21' '22' '23' '24' '25' '26'};
+% trial number (numbers of stimulus triggers)
+trig.num = 1600;
+% stimulus onset asynchrony between triggers (in seconds)
+trig.soa = 0.15;
+
+trig.checkTrig = {{'11' '12' '13' '14' '15' '16' '17' '18'};
+                  {'21' '22' '23' '24' '25' '26' '27' '28' '29' '30' '31' '32' '33' '34' '35' '36'}};
+
+
 
 %% RETRIGGERING
 

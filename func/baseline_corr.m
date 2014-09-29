@@ -18,12 +18,10 @@
 % You should have received a copy of the GNU General Public License
 % along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-function erpAll = baseline_corr(erpAll,analysis)
+function erpAll = baseline_corr(erpAll,analysis,restoredConf)
 
-if ismember(analysis.rejmode,[1 2 3]) && analysis.rmBase
-    
+if analysis.rmBase
     disp(':: Performing baseline correction'); 
-
     % get ms range of baseline window relative to beginning of epoch
     baseMS(1) = analysis.baseWin(1) - analysis.erpWin(1);
     baseMS(2) = analysis.baseWin(2) - analysis.erpWin(1);
@@ -43,6 +41,6 @@ if ismember(analysis.rejmode,[1 2 3]) && analysis.rmBase
         end
     end
 
-elseif  ismember(analysis.rejmode,[1 2 3]) && ~analysis.rmBase
+elseif  ismember(restoredConf.analysis.rejmode,[1 2 3]) && ~analysis.rmBase
     disp(':: WARNING. Skipping baseline correction!');
 end

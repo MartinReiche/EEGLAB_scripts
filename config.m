@@ -46,8 +46,8 @@ function varargout = config(Method,varargin)
     % {'LO1', 'LO2', 'SO1', 'IO1'}
     analysis.eyeChan = {'LO1', 'LO2', 'SO1', 'IO1'};
     % Rejection mode (0: no rejection, 1 delta rejection, 2 delta + eye
-    % correction, 3 reject events specified in file, 4 sorted averaging
-    % [not yet implemented])
+    % correction, 3 reject events specified in file, 4 sorted averaging,
+    % 5 sorted averaging  + eye correction)
     analysis.rejmode = 2;
     % perform baseline correction (this option is only available for
     % rejection modes other than sorted averaging, with sorted averaging
@@ -62,8 +62,10 @@ function varargout = config(Method,varargin)
     analysis.erpWin = [-100 200];
     % baseline window 
     analysis.baseWin = [-100 0];
-    % Number of Blocks (number of raw files per subject)
-    analysis.nBlocks = 15;
+    % block numbers for passive stimulation
+    analysis.blocksPassive = 1:16;
+    % block numbers for active stimulation
+    analysis.blocksActive = 17:20;
     % Indices of Events to exclude 
     analysis.eventExcl = [1 2];
     % Trigger of events which were systematically excluded
@@ -110,10 +112,10 @@ function varargout = config(Method,varargin)
     analysis.savedErpWin = 1;
     % Rejection method labels
     analysis.rejLabel = {'no rejection';'delta rejection';...
-                        'delta rejection and eye correction';...
+                        'delta rejection and eye-movement correction';...
                         'rejection based on predefined indices';...
-                        'sorted averaging'};
-    analysis.rejFileLabel = {'no_rej';'delta_rej';'delta_eye';'file_rej';'sorted_avr'};
+                        'sorted averaging';'sorted averaging and eye-movement correction'};
+    analysis.rejFileLabel = {'no_rej';'delta_rej';'delta_eye';'file_rej';'sorted_avr';'sorted_eye'};
 
     %% CHANNEL INTERPOLATION %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     % Subject, channel name, block
@@ -304,7 +306,7 @@ function varargout = config(Method,varargin)
     % define test type for running statistics ('anova' or 'trendtest')
     plotPar.statTest = 'trendtest';
     % define alpha (q) level for fdr of running anova 
-    plotPar.alpha = 0.5;
+    plotPar.alpha = 0.05;
     % define time window for running statistics
     % plotPar.runStatWin = analysis.erpWin;
     plotPar.runStatWin = analysis.erpWin;
@@ -402,12 +404,16 @@ switch lower(Method)
         error([':: Wrong option: ' varargin{1} ' (task is required)']);
     elseif taskType == 1
         analysis.chanInterp = chanInterp1; 
+        analysis.blocks = analysis.blocksPassive;
+        analysis.nBlocks = numel(analysis.blocks);
     elseif taskType == 2
         analysis.chanInterp = chanInterp2; 
+        analysis.blocks = analysis.blocksActive;
+        analysis.nBlocks = numel(analysis.blocks);
     else
         error([':: Invalid value for Option: ' varargin{1}])
     end
-    
+
     % define output arguments
     varargout{1} = analysis;
     
@@ -444,7 +450,7 @@ switch lower(Method)
         paths.libDir = paths.local.libDir;
         paths.stimFuncDir = paths.local.stimFuncDir;
         % path to electrode setup file
-        paths.elecSetup = [paths.libDir 'elec_96ch.elp'];
+        paths.elecSetup = [paths.libDir paths.elecSetup];
         paths.cluster = 'local';
     elseif ismember(analysis.core,{'HERO'})
         paths.rawDir = paths.remote.rawDir;
@@ -454,7 +460,7 @@ switch lower(Method)
         paths.libDir = paths.remote.libDir;
         paths.stimFuncDir = paths.remote.stimFuncDir;
         % path to electrode setup file
-        paths.elecSetup = [paths.libDir 'elec_96ch.elp'];
+        paths.elecSetup = [paths.libDir paths.elecSetup];
         paths.cluster = 'remote';
     else
         error([':: Cluster configuration mismatch, could not configure ' ...
@@ -485,7 +491,7 @@ switch lower(Method)
                             filtName analysis.rejFileLabel{analysis.rejmode+1} '.mat'];
         paths.rejFileName = ['rejectedEpochs(' num2str(analysis.erpWin(1)) 'to' num2str(analysis.erpWin(2)) ...
                             'ms)_' filtName analysis.rejFileLabel{analysis.rejmode+1} '.mat'];
-    elseif analysis.rejmode == 2 
+    elseif ismember(analysis.rejmode,[2 5])
 
         if ~analysis.filterFlag | ~filtPar.post.enable
             filtName = 'NOFILT_';
@@ -514,9 +520,6 @@ switch lower(Method)
     varargout = {filtPar};
     
   case 'triggers'
-    % Initialize label flag
-    trig.plotLabels = 0;
-    trig.diffLabels = 0;
     % evaluate input arguments
     for iArg = 1:2:numel(varargin)
         switch lower(varargin{iArg})
@@ -526,12 +529,18 @@ switch lower(Method)
             error([':: There is no input argument called ' varargin{iArg}]);
         end
     end
+    trig = [];
     % fetch trigger codes, trigger labels and diffwave configurations
     trig = triggerlabels('triggers',trig,taskType);
     % Initialize Trigger Matrix and Label array for given Task
     trig.newTriggers = {};
     trig.trigLabels = {};
     trig.color = [];
+    if ~isempty(trig.diffWaves)
+        trig.diffLabels = trig.diffWaves(:,3);
+    else
+        trig.diffLabels = [];
+    end
     % build trigger and label arrays for given task
     for iTrig = 1:size(trig.triggers,1)
         if ismember(taskType,trig.triggers{iTrig,3})

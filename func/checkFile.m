@@ -20,6 +20,7 @@ end
 switch analysis.rawFormat
   case 'biosemi'
     % convert all triggers to strings BioSemi Raw Data
+    disp(' ');
     disp(':: Converting all triggers to strings');
     for iTrig = 1:size(EEG.event,2)
         EEG.event(iTrig).type = num2str(EEG.event(iTrig).type);

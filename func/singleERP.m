@@ -148,7 +148,11 @@ if ~isempty(spData.plotPar.compWin) && strcmpi(spData.type,'stats')
     set(gca,'XTick',xTickPos);
     set(gca,'XTickLabel',spData.plotPar.winNames);
     set(gca,'YLim',[(meanMin - spData.plotPar.yOverhead)  (meanMax + spData.plotPar.yOverhead)]);
-    set(get(gca,'YLabel'),'String','Voltage (micro Volts)');
+    if spData.analysis.gfp
+        set(get(gca,'YLabel'),'String','Global Field Power');
+    else
+        set(get(gca,'YLabel'),'String','Mean Amplitude (Micro Volts)');
+    end
 end
 
 if ~strcmpi(spData.type,'singlesub')

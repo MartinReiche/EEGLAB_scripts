@@ -25,7 +25,7 @@ function eventCount = segmentation(EEG,trig,analysis,paths,eventCount,iFile,iSub
     % Switch rejection Mode
     switch analysis.rejmode
         % Delta rejection only
-      case {1,3,4}
+      case {0,1,3,4}
         
         % get vector of all events
         for iEvent = 1:size(EEG.event,2)
@@ -74,7 +74,7 @@ function eventCount = segmentation(EEG,trig,analysis,paths,eventCount,iFile,iSub
             end
         end
         % delta rejection plus EMC
-      case 2
+      case {2,5}
         clear EEG;
         EEG = pop_loadset([paths.resDir...
                            paths.resFileSubSpec num2str(iSubj, '%0.2d')...
@@ -140,5 +140,6 @@ function eventCount = segmentation(EEG,trig,analysis,paths,eventCount,iFile,iSub
         save([paths.resDir paths.resFileSubSpec num2str(iSubj, '%0.2d') 'nTrials.mat'],'eventCount');
         % delete old epoching all data file        
         disp(':: Deleting old all data file');
+        disp(' ');
         delete([paths.resDir paths.resFileSubSpec num2str(iSubj, '%0.2d') 'all.*']);
     end

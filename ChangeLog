@@ -1,3 +1,75 @@
+2014-09-29  Martin Reiche  <reiche.stud@googlemail.com>
+
+	* triggerlabels.m: Added some more parameters (soa, number of
+	expected triggers etc.) for parameter checking by
+	ckeckFileBasic.m. 
+
+	* lib/subplotERP.m: Several changes related to GFP plotting.
+
+	* lib/drawSig.m: Implemented t-Test.
+
+	* lib/runningStat.m: Implemented t-Test for samplepointwise
+	statistics. 
+
+	* lib/getDisp.m: Minor fixes.
+
+	* func/usabledata.m: Now shows sorted histogram of proportion of
+	usable data across all subjects if no threshold is given.
+
+	* func/singleERP.m: Several changes related to GFP plotting.
+
+	* func/segmentation.m: Implemented sorted averaging.
+
+	* func/save_erp.m: Minor changes of the way usable data
+	information gets logged.
+
+	* func/preprocess.m: Implemented sorted averaging.
+
+	* func/prepSubDir.m: Several changes related to block number
+	specification.
+
+	* func/plot_erp.m: Several changes related to GFP plotting.
+
+	* func/loadRawData.m (loadRawData): Implemented block number
+	specification. 
+
+	* func/interpChan.m: Fixed some bugs related to different
+	dimension structures between different raw data formats
+	(dimensions of chanlocs structure is swapped between brainvision
+	and BioSemi raw data)
+
+	* func/getMax.m: Added GFP option.
+
+	* func/calc_gfp.m: Added routine for calculation and display of
+	global field power instead of event-related potentials.
+
+	* lib/eeg_rejsortavg.m: Added routine for sorted averaging.
+
+	* func/fir_filter.m: Changed display behavior.
+
+	* func/eeg_rejection.m: Implemented sorted averaging.
+
+	* func/checkRawData.m: Minor changes.
+
+	* func/checkFileBasic.m (checkFileBasic): Added. This routine is
+	comparable to checkFile.m but much more basic (less detailed check
+	procedure). It only tests if basic stimulation parameters are
+	correct (sampling rate, soa, right triggers). Can be used if the
+	precise stimulation parameters are not available.
+
+	* func/chanLoc.m: Minor bug fix.
+
+	* func/calc_diff.m: Changes related to the implementation of
+	sorted averaging.
+
+	* func/bipolarize.m (bipolarize): Minor bug fix.
+
+	* func/baseline_corr.m: Changes related to the implementation of
+	sorted averaging.
+
+	* config.m: Added some options. It is now possible to specify
+	block numbers of the blocks that should be analysed.
+
 2014-08-14  Martin Reiche  <reiche.stud@googlemail.com>
 
 	* config.m (config): Removed parameter analysis.singleDispMode

@@ -40,7 +40,7 @@ end
 
 % validate input arguments
 switch 1
-  case ~exist('plotPar','var')
+  case ~exist('plotPar','var') 
     error(':: Not enough input arguments, ''parameters'' is missing')
   case ~exist('nPlot','var')
     error(':: Not enough input arguments, ''structure'' is missing')
@@ -66,7 +66,9 @@ switch lower(method)
         % take prespecified parameters from configfile
         dispPars.nRow = plotPar.plotDim(1);
         dispPars.nCol = plotPar.plotDim(2);
-        dispPars.legend = plotPar.plotDim(3);
+        if plotLegend
+            dispPars.legend = plotPar.plotDim(3);
+        end
         dispPars.pos = plotPar.plotChannelPos;
     end
   case 'statistics'

@@ -41,7 +41,7 @@ for iDraw = 1:2
 
     % draw significant intervalls
     switch lower(plotPar.statTest)
-      case 'anova'
+      case {'anova','t-test'}
         for iInt = 1:size(drawInt,2)
             if drawInt(1,iInt)
                 intStart = iInt * timeRes + analysis.erpWin(1);

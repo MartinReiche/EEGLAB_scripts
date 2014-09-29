@@ -131,6 +131,7 @@ function varargout = eeg_analysis(taskType,subjects,method,threshold)
             save_erp(subErp,subErpEqual,subTrialInd,corrTrials,numEvent,rejEpoch,trialNum,subjects,paths,trig,dur,analysis,filtPar,rejLog);
             % define output arguments
             varargout{1} = [];
+                        
           else
             %% parallel processing
             
@@ -237,7 +238,8 @@ function varargout = eeg_analysis(taskType,subjects,method,threshold)
                     trigNum = cell(numel(subjects),1);
                     
                     for iTask = 1:size(task,1)
-                        subData = get(task(iTask),'OutPutArguments');
+                        
+                        subData = get(task(iTask),'OutPutArguments')
                         subData = subData{1};
                         % combine subject specific results of preprocessing
                         subErp{iTask,1} = subData.subErp;
@@ -279,7 +281,7 @@ function varargout = eeg_analysis(taskType,subjects,method,threshold)
                 paths.resDirAll = paths.local.resDir;
               case 'usabledata'
                 if nargin < 4
-                   error(':: Threshold of acceptable usable data in percent must be specified') 
+                    threshold = [ ];
                 end
                 paths.rawDirAll = paths.local.rawDir;
                 paths.resDirAll = paths.local.resDir;

@@ -61,11 +61,16 @@ for iPoint = 1:size(statData,3)
         pVals(iPoint) = OneWayrmAoV(statData(:,:,iPoint));
       case 'trendtest'
         [pVals(iPoint),r(iPoint)] = trendtest(statData(:,:,iPoint));
-        
+      case 't-test'
+        if size(statData(:,:,1),2) > 2
+            error(':: Too much input data for running t-Test (max. 2 columns)'); 
+        end
+        [H,pVals(iPoint)] = ttest(statData(:,1,iPoint),statData(:,2,iPoint));
       otherwise
-        error([':: There is no option calles ' statTest ' for running statistics.']);
+        error([':: There is no option called ' spData.plotPar.statTest ' for running statistics.']);
     end
 end    
+
 % get significant time points without correction for multiple comparisons
 sigInt.raw = find(pVals < spData.plotPar.alpha);
 if isempty(sigInt.raw)
@@ -82,3 +87,4 @@ else
 end
 % save trend direction to output
 sigInt.r = r;
+

@@ -131,7 +131,11 @@ switch lower(method)
                             plotPar.yScale(2)-plotPar.yScale(1)],'FaceColor',[0.9 ...
                             0.9 0.9],'EdgeColor','none');
         % plot baseline label
-        text(plotPar.baseWin(1)+10,plotPar.yScale(1)-0.15*plotPar.yCoef,'Baseline','FontSize',11);
+        if analysis.gfp
+             text(plotPar.baseWin(1)+10,plotPar.yScale(2)-0.15*plotPar.yCoef,'Baseline','FontSize',11);
+        else
+            text(plotPar.baseWin(1)+10,plotPar.yScale(1)-0.15*plotPar.yCoef,'Baseline','FontSize',11);
+        end
     end
 
     % add component boxes
@@ -142,8 +146,11 @@ switch lower(method)
                                 plotPar.compWin(nComp,2)-plotPar.compWin(nComp,1)...
                                 plotPar.yScale(2)-plotPar.yScale(1)],'FaceColor',[0.8 0.8 0.8],'EdgeColor','none');
             % add component name of current window
-            text(plotPar.compWin(nComp,1),plotPar.yScale(1)-0.15*plotPar.yCoef,plotPar.comps{nComp},'FontSize',11);
-            
+            if analysis.gfp
+                text(plotPar.compWin(nComp,1),plotPar.yScale(2)-0.15*plotPar.yCoef,plotPar.comps{nComp},'FontSize',11);
+            else
+                text(plotPar.compWin(nComp,1),plotPar.yScale(1)-0.15*plotPar.yCoef,plotPar.comps{nComp},'FontSize',11);
+            end
         end
     end
 
@@ -169,11 +176,16 @@ switch lower(method)
         end
     end
 
-    % add name of the electrode to the current plot
-    text(plotPar.xScale(1)+10,plotPar.yScale(1)+0.25*plotPar.yCoef,plotPar.plotChannelsStat{plotPar.currChan},'FontSize',16);
-    % add labels
+    % Add axis labels and electrode label
+    if ~analysis.gfp
+        % add name of the electrode to the current plot
+        text(plotPar.xScale(1)+10,plotPar.yScale(1)+0.25*plotPar.yCoef,plotPar.plotChannelsStat{plotPar.currChan},'FontSize',16);
+        ylabel(['Amplitude (microVolts)']);
+    else
+        ylabel(['Global Field Power']);
+    end
     xlabel('Latency (ms)');
-    ylabel(['Amplitude (microVolts)']);
+
     % adjust Axes
     axis([plotPar.xScale(1) plotPar.xScale(2) plotPar.yScale(1) plotPar.yScale(2)]);
     secondTick = ((ceil(plotPar.xScale(1)/plotPar.xCoef)-((plotPar.xScale(1)/plotPar.xCoef)))*plotPar.xCoef)+plotPar.xScale(1);
@@ -189,9 +201,15 @@ switch lower(method)
         % if not, add it
         xRange = [plotPar.xScale(1) xRange];
     end
-        
-    set(gca,'Xtick',xRange,'Ytick',plotPar.yScale(1):plotPar.yCoef:plotPar.yScale(2),...
-            'YDir','reverse','box','off','FontSize',11);
+
+    if ~analysis.gfp
+        set(gca,'Xtick',xRange,'Ytick',plotPar.yScale(1):plotPar.yCoef:plotPar.yScale(2),...
+                'YDir','reverse','box','off','FontSize',11);
+    else
+        set(gca,'Xtick',xRange,'Ytick',plotPar.yScale(1):plotPar.yCoef:plotPar.yScale(2),...
+                'box','off','FontSize',11);
+    end
+    
     % add zero lines
     set(line(plotPar.xScale,[0 0]),'Color',[0 0 0],'LineStyle','-','linewidth',0.5);
     set(line([0 0],plotPar.yScale),'Color',[0 0 0],'LineStyle','-','linewidth',0.5);
@@ -245,7 +263,11 @@ switch lower(method)
                             plotPar.yScale(2)-plotPar.yScale(1)],'FaceColor',[0.9 ...
                             0.9 0.9],'EdgeColor','none');
         % plot baseline label
-        text(plotPar.baseWin(1)+10,plotPar.yScale(1)-0.15*plotPar.yCoef,'Baseline','FontSize',11);
+        if analysis.gfp
+            text(plotPar.baseWin(1)+10,plotPar.yScale(2)-0.15*plotPar.yCoef,'Baseline','FontSize',11);
+        else
+            text(plotPar.baseWin(1)+10,plotPar.yScale(1)-0.15*plotPar.yCoef,'Baseline','FontSize',11);
+        end
     end
 
 
@@ -253,7 +275,11 @@ switch lower(method)
     text(plotPar.xScale(1)+10,yScale(1)+0.45*plotPar.yCoef,plotPar.currChanLabel,'FontSize',16);
     % add labels
     xlabel('Latency (ms)');
-    ylabel(['Amplitude (microVolts)']);
+    if analysis.gfp
+         ylabel(['Global Field Power']);
+    else
+        ylabel(['Amplitude (microVolts)']);
+    end
     % adjust Axes
     axis([plotPar.xScale(1) plotPar.xScale(2) yScale(1) yScale(2)]);
     % set the correct X and Y ticks and reverse ordinate
@@ -271,8 +297,13 @@ switch lower(method)
         xRange = [plotPar.xScale(1) xRange];
     end
     
-    set(gca,'Xtick',xRange,'Ytick',plotPar.yScale(1):plotPar.yCoef:plotPar.yScale(2),...
-            'YDir','reverse','box','off','FontSize',11);
+    if ~analysis.gfp
+        set(gca,'Xtick',xRange,'Ytick',plotPar.yScale(1):plotPar.yCoef:plotPar.yScale(2),...
+                'YDir','reverse','box','off','FontSize',11);
+    else
+        set(gca,'Xtick',xRange,'Ytick',plotPar.yScale(1):plotPar.yCoef:plotPar.yScale(2),...
+                'box','off','FontSize',11);
+    end
     set(line(plotPar.xScale,[0 0]),'Color',[0 0 0],'LineStyle','-','linewidth',0.5);
     set(line([0 0],yScale),'Color',[0 0 0],'LineStyle','-','linewidth',0.5);
     % add grid
@@ -310,8 +341,11 @@ switch lower(method)
                                     plotPar.compWin(nComp,2)-plotPar.compWin(nComp,1)...
                                     yScale(2)-yScale(1)],'FaceColor',[0.8 0.8 0.8],'EdgeColor','none');
                 % add component name of current window
-                text(plotPar.compWin(nComp,1),yScale(1)-0.15*plotPar.yCoef,plotPar.comps{nComp},'FontSize',11);
-                
+                if analysis.gfp
+                    text(plotPar.compWin(nComp,1),yScale(2)-0.15*plotPar.yCoef,plotPar.comps{nComp},'FontSize',11);
+                else
+                    text(plotPar.compWin(nComp,1),yScale(1)-0.15*plotPar.yCoef,plotPar.comps{nComp},'FontSize',11);
+                end
             end
         end
     end

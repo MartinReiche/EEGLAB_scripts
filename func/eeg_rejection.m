@@ -47,43 +47,6 @@ loadData = load([subjDir 'Subj' num2str(iSubj, '%0.2d') ...
                 'nTrials.mat'],'eventCount');
 eventCount = loadData.eventCount;
 
-%% find channel numbers to exclude for current Subject
-sFound = 0;
-s = 1;
-rejLog.exclVector = [];
-while s <= size(analysis.excludeElecs,1) && ~sFound
-    if strcmp(analysis.excludeElecs{s}(1,:),num2str(iSubj, '%0.2d'))
-        sFound = 1;
-        disp(' ');
-        disp([':: Excluded electrodes for subject ' num2str(iSubj, '%0.2d') ':']);
-        if strcmp(analysis.excludeElecs{s}(2,:),'none')
-            disp('none');
-            disp(' ');
-        else
-            for ne = 2:size(analysis.excludeElecs{s,:})
-                disp(analysis.excludeElecs{s}(ne,:));
-                eFound = 0;
-                for iChannel = 1:numel(chanlocs) % determine relevant channel numbers
-                    if strcmp(chanlocs(iChannel).labels,analysis.excludeElecs{s}(ne,:))
-                        eFound = 1;
-                        rejLog.exclVector = [rejLog.exclVector iChannel];
-                    end
-                end
-                if ~eFound
-                    input(['electrode not found in data, go on anyway?']);
-                end
-            end
-            disp([':: (channels ' num2str(rejLog.exclVector) ')']);
-            disp(' ');
-        end
-    else
-        s = s+1;
-    end
-end
-if ~sFound
-    input(['subject ' num2str(iSubj, '%0.2d') ' not found in electrode exclusion list, go on including all their channels?']);
-end % End of finding Channels to exclude
-
 % initialize matrix for number of usable data per trigger
 corrTrials = zeros(1,size(trig.triggers,1));
 
@@ -124,7 +87,7 @@ for iTrig = 1:size(trig.triggers,1)
           case analysis.rejmode == 0
             % NO REJECTION
             disp(':: ARTIFACT REJECTION IS SWITCHED OFF!');
-          case analysis.rejmode == 1 | analysis.rejmode == 2
+          case ismember(analysis.rejmode,[1 2])
             % DELTA REJECTION (with or without eye) go through all channels in all trials
             % and count events that will be rejected according to delta
             % criterion
@@ -165,8 +128,8 @@ for iTrig = 1:size(trig.triggers,1)
                     end
                 end
             end
-            rejLog.minChange(iTrig) = min(amplChange(:,iTrig));
-            rejLog.maxChange(iTrig) = max(amplChange(:,iTrig));
+            rejLog.minChange(iTrig) = min(min(amplChange));
+            rejLog.maxChange(iTrig) = max(max(amplChange));
             % count number of events with minimal amplitude change
             nFlat = numel(find(epochOut == 1));
                         
@@ -185,12 +148,13 @@ for iTrig = 1:size(trig.triggers,1)
             else
                 disp([':: Subject ' num2str(iSubj, '%0.2d') ...
                       ' Trigger ' currTrig [' minimum ' ...
-                                    'amplitude change: '] num2str(rejLog.minChange(iTrig)) ' microV']);
+                                    'amplitude change: '] num2str(rejLog.minChange(iTrig)) ' micro Volts']);
+                disp(' ');
             end
 
             
             % mark trials for rejection
-            EEG2 = eeg_rejdelta(EEG2,'thresh',analysis.sortthresh,'chans',setdiff(1:size(EEG2.data,1),rejLog.exclVector));
+            EEG2 = eeg_rejdelta(EEG2,'thresh',analysis.sortthresh,'chans',1:size(EEG2.data,1));
           case analysis.rejmode == 3
             % REJECTION BASED ON PREDEFINED TRIAL INDICES 
             
@@ -198,19 +162,87 @@ for iTrig = 1:size(trig.triggers,1)
             if iTrig == 1
                 rejEpoch = rejIndex(paths);
             end
+          case ismember(analysis.rejmode,[4 5])
+            % SORTED AVERAGING WITH AND WITHOUT EYE CORRECTION
+                        
+            % BASELINE CORRECTION            
+            disp(':: Performing baseline correction'); 
+            % get ms range of baseline window relative to beginning of epoch
+            baseMS(1) = analysis.baseWin(1) - analysis.erpWin(1);
+            baseMS(2) = analysis.baseWin(2) - analysis.erpWin(1);
+            % correct for 0
+            baseMS(baseMS == 0) = 1;
+            % get the point range of the baseline window
+            pointrange = ceil(baseMS(1)*analysis.sampRate/1000):floor(baseMS(2)*analysis.sampRate/1000);
+            % separately for all subjects and all channels
+            for iChan = 1:size(EEG2.data,1)
+                % get the mean value in the baseline window of the current subject on the
+                % current channel and subtract it from the whole data range of the
+                % current subject on the current channel
+                tmpmean = mean(double(EEG2.data(iChan,pointrange,:)),2);
+                % erpAll(iSubj,:,:,iChan) = erpAll(iSubj,:,:,iChan) - repmat(tmpmean, [1 1 size(erpAll,3) 1]);
+                EEG2.data(iChan,:,:) = EEG2.data(iChan,:,:) - repmat(tmpmean, [1 size(EEG2.data,2) 1]);
+                % mean(double(EEG2.data(iChan,pointrange,:)),2)
+            end
+            
+            disp(':: Performing sorted averaging'); 
+            % SORTED AVERAGING (with or without eye movement correction) 
+            % mark trials for rejection
+            EEG2 = eeg_rejsortavg(EEG2);
+
+            % get minimal and maximal amplitude values aover all channels
+            % and trials for current trigger and determine flat epoches of
+            % current trigger 
+            epochOut = zeros(1,size(EEG2.data,3));
+            amplChange = zeros(size(EEG2.data,1),size(EEG2.data,3));
+            % find events with minimal amplitude change
+            for iChannel = 1:size(EEG2.data,1)
+                for iTrial = 1:size(EEG2.data,3)
+                    amplChange(iChannel,iTrial) = abs(max(EEG2.data(iChannel,:,iTrial)) - min(EEG2.data(iChannel,:,iTrial)));
+                    if amplChange(iChannel,iTrial) < analysis.flatthresh
+                        epochOut(iTrial) = 1;                                
+                    end
+                end
+            end
+            rejLog.minChange(iTrig) = min(min(amplChange));
+            rejLog.maxChange(iTrig) = max(min(amplChange));
+            % count number of events with minimal amplitude change
+            nFlat = numel(find(epochOut == 1));
+                        
+            % reject epochs with minimal absolut amplitude differences (due to technical
+            % problems)
+            if analysis.rejFlatepochs && nFlat
+                disp([':: Subject ' num2str(iSubj, '%0.2d') ...
+                      ' Trigger ' currTrig ' ' num2str(nFlat) ' Events flat']);
+                disp(':: These will be rejected');
+                % reject events with minimal amplitude change                       
+                EEG2.reject.rejmanual = epochOut == 1 | EEG.reject.rejmanual == 1;
+                % store number of trial which were rejected for being
+                % flat for later report in rejection log [handled by save_erp.m]
+                rejLog.flat = [rejLog.flat;{iSubj iTrig nFlat eventCount(iTrig) size(EEG2.data,3)}];
+                disp([':: Subject ' num2str(iSubj, '%0.2d') ' Trigger ' currTrig ' wrong number of trials']);
+            else
+                disp([':: Subject ' num2str(iSubj, '%0.2d') ...
+                      ' Trigger ' currTrig [' minimum ' ...
+                                    'amplitude change: '] num2str(rejLog.minChange(iTrig)) ' microV']);
+                disp(' ');
+            end
+
+
           otherwise
             error([':: Invalid Option for rejection mode: ' num2str(analysis.rejmode)]);
         end
         
         % Superpose all marked rejections to reject.rejglobal
         EEG2 = eeg_rejsuperpose(EEG2, 1, 1, 1, 1, 1, 1, 1, 1);
+
         % get vector of marked trials and store them for each participant and each trigger
         switch 1
           case analysis.rejmode == 3
             % assign rejection index vector of current subject and current trigger to
             % EEG2.reject.rejglobal vector
             EEG2.reject.rejglobal = rejEpoch{iSubj,iTrig};
-          case analysis.rejmode == 1 | analysis.rejmode == 2
+          case ismember(analysis.rejmode,[1 2 4 5])
             % get vector of marked trials and store them for each participant and each trigger
             rejEpoch{1,iTrig} = EEG2.reject.rejglobal;
         end            
@@ -224,7 +256,7 @@ for iTrig = 1:size(trig.triggers,1)
         %% get ERPs for current Subject %%%%%%%%%%%%%%%%%%%%%
         subErp(1,iTrig,:,:) = (squeeze(mean(EEG3.data,3)))';
         % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%            
-
+        disp(' ');
         disp([':: Subject ' num2str(iSubj, '%0.2d') ' Trigger ' currTrig ' after correction: ' num2str(size(EEG3.data,3)) ' Events averaged']);
         % save number of usable trials
         corrTrials(1,iTrig) = size(EEG3.data,3);
@@ -233,10 +265,8 @@ for iTrig = 1:size(trig.triggers,1)
         if corrTrials(1,iTrig) == 1 
             corrTrials(1,iTrig) = 0;
         end
-        
-        disp(' ');
-        
         disp(':: Extracting and saving bad trials.');
+        disp(' ');
         EEG3 = pop_rejepoch(EEG2,mod(EEG2.reject.rejglobal+1,2),0);
         EEG3 = pop_saveset(EEG3,[...
             paths.resFileSubSpec num2str(iSubj, '%0.2d')... 

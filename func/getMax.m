@@ -56,8 +56,8 @@ switch lower(method)
                 statWin = [round(((plotPar.compWin(iWin,1)+abs(plotPar.xScale(1)))*analysis.sampRate)/1000) ...
                            round(((plotPar.compWin(iWin,2)+abs(plotPar.xScale(1)))*analysis.sampRate)/1000)];
 
-                erpMean(iWin,iWave,iChan) = mean(mean(squeeze(erpAll(:,currInd(iWave),statWin,channels2plot(iChan))),2));
-                erpErr(iWin,iWave,iChan) = std(mean(squeeze(erpAll(:,currInd(iWave),statWin,channels2plot(iChan))),2))/sqrt(size(erpAll,1));
+                erpMean(iWin,iWave,iChan) = mean(mean(squeeze(erpAll(:,currInd(iWave),statWin(1):statWin(2),channels2plot(iChan))),2));
+                erpErr(iWin,iWave,iChan) = std(mean(squeeze(erpAll(:,currInd(iWave),statWin(1):statWin(2),channels2plot(iChan))),2))/sqrt(size(erpAll,1));
             end
         end
     end
@@ -125,8 +125,8 @@ switch lower(method)
         for iWin = 1:size(plotPar.compWin,1)
             statWin = [round(((plotPar.compWin(iWin,1)+abs(plotPar.xScale(1)))*analysis.sampRate)/1000) ...
                        round(((plotPar.compWin(iWin,2)+abs(plotPar.xScale(1)))*analysis.sampRate)/1000)];
-            erpMean(iWin,iWave) = mean(mean(squeeze(erpAll(:,currInd(iWave),statWin,channels2plot(statChan))),2));
-            erpErr(iWin,iWave) = std(mean(squeeze(erpAll(:,currInd(iWave),statWin,channels2plot(statChan))),2))/sqrt(size(erpAll,1));
+            erpMean(iWin,iWave) = mean(mean(squeeze(erpAll(:,currInd(iWave),statWin(1):statWin(2),channels2plot(statChan))),2));
+            erpErr(iWin,iWave) = std(mean(squeeze(erpAll(:,currInd(iWave),statWin(1):statWin(2),channels2plot(statChan))),2))/sqrt(size(erpAll,1));
         end
     end 
     
@@ -164,6 +164,84 @@ switch lower(method)
          maxVal.erpMax = plotPar.yScale(2);
     end
   
+  case 'gfp'
+    % initialize variables
+    currInd = [];
+    
+    for iPlot = 1:size(plotConds,2)
+        % get the data to plot 
+        for iCurve = 1:size(plotConds{iPlot},2) 
+            % go through each Curve of the current figure
+            foundLabel = 0;
+            for iIndex = 1:size(labels,1)
+                % check current curve label against each label of the
+                % curves stored in erpAll to get the index of the current
+                % curve label 
+                if strcmp(plotConds{iPlot}(iCurve),labels(iIndex))
+                    foundLabel = 1;
+                    currInd = [currInd iIndex];
+                end        
+            end
+        end
+    end
+
+    % find and remove eye channels
+    eogHpos = strmatch('HEOG',{chanlocs.labels},'exact');
+    eogVpos = strmatch('VEOG',{chanlocs.labels},'exact');
+    if isempty(eogHpos) || isempty(eogVpos)
+        error(':: Could not find HEOG and VEOG channels'); 
+    end
+    erpAll = erpAll(:,:,:,setdiff(1:size(erpAll,4),[eogHpos eogVpos]));
+
+    
+    % get data
+    for iWave = 1:numel(currInd)
+        erpMax(iWave) = ceil(max(mean(squeeze(erpAll(:,currInd(iWave),:)),1)));
+        erpMin(iWave) = floor(min(mean(squeeze(erpAll(:,currInd(iWave),:)),1)));
+        
+        for iWin = 1:size(plotPar.compWin,1)
+            statWin = [round(((plotPar.compWin(iWin,1)+abs(plotPar.xScale(1)))*analysis.sampRate)/1000) ...
+                       round(((plotPar.compWin(iWin,2)+abs(plotPar.xScale(1)))*analysis.sampRate)/1000)];
+            
+            erpMean(iWin,iWave) = mean(squeeze(mean(erpAll(:,currInd(iWave),statWin(1):statWin(2)))));
+            erpErr(iWin,iWave) = std(mean(squeeze(erpAll(:,currInd(iWave),statWin(1):statWin(2))),2))/sqrt(size(erpAll,1));
+        end
+    end 
+    
+     if ~isempty(plotPar.compWin)
+        % get maximal and minimal values (amplitude mean in time window plus SEM)
+        meanMaxValues = [];
+        for iWave = 1:numel(erpMean)
+            meanMaxValues = [meanMaxValues erpMean(iWave) - erpErr(iWave)];
+            meanMaxValues = [meanMaxValues erpMean(iWave) + erpErr(iWave)];
+        end
+        % get minimal and maximal value for current figure        
+        if isempty(plotPar.yScaleBar)
+            % if no default value is set in config
+            maxVal.meanMin = min(meanMaxValues);
+            maxVal.meanMax = max(meanMaxValues);
+            maxVal.yOverhead = plotPar.yOverhead;
+        else
+            % if default value is set in config
+            maxVal.meanMin = plotPar.yScaleBar(1);
+            maxVal.meanMax = plotPar.yScaleBar(2);
+            maxVal.yOverhead = 0;
+        end
+    else
+        maxVal.meanMin = [];
+        maxVal.meanMax = [];
+    end
+    
+    if isempty(plotPar.yScale)
+        % if no default value is set in config
+        maxVal.erpMin = min(erpMin);
+        maxVal.erpMax = max(erpMax);
+    else
+        % if default value is set in config
+         maxVal.erpMin = plotPar.yScale(1);
+         maxVal.erpMax = plotPar.yScale(2);
+    end
+    
   otherwise
     error([':: Invalid Option: ' method]);
 end

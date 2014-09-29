@@ -31,6 +31,7 @@ for iChan = 1:numel(EEG.chanlocs)
 end
 
 % Set channel locations 
-EEG=pop_chanedit(EEG,'lookup',[paths.elecSetup]);
-
+[paths.elecSetup]
+EEG=pop_chanedit(EEG,'lookup',paths.elecSetup);
+disp(' ');
 end
