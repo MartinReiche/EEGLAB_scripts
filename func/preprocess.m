@@ -32,15 +32,15 @@ function out = preprocess(taskType,iSubj,analysis,filtPar,trig,paths)
     paths = prepSubDir(analysis,paths,iSubj);
 
     % get condition order
-    condOrder = preporder(iSubj);
+    condOrder = preporder(iSubj,taskType,0,paths);
     counter = 0;
     
     for iFile = 1:analysis.nBlocks
         counter = counter + 1;
         % load raw data for current file and stimulation parameters
-        [EEG, analysis, paths] = loadRawData(paths, iSubj,taskType,iFile,analysis,counter);
+        [EEG, analysis, paths, block] = loadRawData(paths,iSubj,taskType,iFile,analysis,counter);
         % check parameters (sampling rate, triggers etc)
-        EEG = checkFileBasic(EEG,iSubj,iFile,taskType,analysis,trig,paths,condOrder);
+        EEG = checkFile(EEG,iSubj,iFile,block,taskType,analysis,trig,paths);
         % Retriggering and systematically exclude events from analysis
         EEG = change_trig(EEG,analysis,trig,iFile,condOrder,taskType); 
         % bipolarize eye channels

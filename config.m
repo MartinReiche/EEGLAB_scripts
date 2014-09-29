@@ -190,6 +190,10 @@ function varargout = config(Method,varargin)
     paths.resFileTrigSpec = 'tr';
     % raw subject folder prefix (names of raw data subject folders)
     paths.rawSubFolderPrefix = 'vp';
+    % raw subject file prefix (names of raw data subject files)
+    paths.rawSubFilePrefix = 'vp';
+    % raw file block specifier
+    paths.rawFileBlockSpec = 'bl';
     % raw data file type
     paths.rawFileExt = 'vhdr';
     % behavioral file subject specifier 
